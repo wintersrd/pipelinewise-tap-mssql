@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+# pylint: disable=duplicate-code,too-many-locals,simplifiable-if-expression
+
+import copy
+import singer
+from singer import metadata
+
+import tap_mssql.sync_strategies.common as common
+
+from tap_mssql.connection import connect_with_backoff, MSSQLConnection
+
+LOGGER = singer.get_logger()
+
+
+def generate_bookmark_keys(catalog_entry):
+    md_map = metadata.to_map(catalog_entry.metadata)
+    stream_metadata = md_map.get((), {})
+    replication_method = stream_metadata.get("replication-method")
+
+    base_bookmark_keys = {
+        "last_pk_fetched",
+        "max_pk_values",
+        "version",
+        "initial_full_table_complete",
+    }
+
+    if replication_method == "FULL_TABLE":
+        bookmark_keys = base_bookmark_keys
+    else:
+        bookmark_keys = base_bookmark_keys.union(binlog.BOOKMARK_KEYS)
+
+    return bookmark_keys
+
+
+def sync_table(mssql_conn, catalog_entry, state, columns, stream_version):
+    common.whitelist_bookmark_keys(
+        generate_bookmark_keys(catalog_entry), catalog_entry.tap_stream_id, state
+    )
+
+    bookmark = state.get("bookmarks", {}).get(catalog_entry.tap_stream_id, {})
+    version_exists = True if "version" in bookmark else False
+
+    initial_full_table_complete = singer.get_bookmark(
+        state, catalog_entry.tap_stream_id, "initial_full_table_complete"
+    )
+
+    state_version = singer.get_bookmark(state, catalog_entry.tap_stream_id, "version")
+
+    activate_version_message = singer.ActivateVersionMessage(
+        stream=catalog_entry.stream, version=stream_version
+    )
+
+    # For the initial replication, emit an ACTIVATE_VERSION message
+    # at the beginning so the records show up right away.
+    if not initial_full_table_complete and not (version_exists and state_version is None):
+        singer.write_message(activate_version_message)
+
+    with connect_with_backoff(mssql_conn) as open_conn:
+        with open_conn.cursor() as cur:
+            select_sql = common.generate_select_sql(catalog_entry, columns)
+
+            params = {}
+
+            common.sync_query(
+                cur, catalog_entry, state, select_sql, columns, stream_version, params
+            )
+
+    # clear max pk value and last pk fetched upon successful sync
+    singer.clear_bookmark(state, catalog_entry.tap_stream_id, "max_pk_values")
+    singer.clear_bookmark(state, catalog_entry.tap_stream_id, "last_pk_fetched")
+
+    singer.write_message(activate_version_message)
