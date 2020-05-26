@@ -118,7 +118,8 @@ def create_column_metadata(cols):
 
 def discover_catalog(mssql_conn, config):
     """Returns a Catalog describing the structure of the database."""
-
+    LOGGER.info("Preparing Catalog")
+    mssql_conn = MSSQLConnection(config)
     filter_dbs_config = config.get("filter_dbs")
 
     if filter_dbs_config:
@@ -134,10 +135,10 @@ def discover_catalog(mssql_conn, config):
         )"""
 
     with connect_with_backoff(mssql_conn) as open_conn:
-        cur = mssql_conn.cursor()
+        cur = open_conn.cursor()
+        LOGGER.info("Fetching tables")
         cur.execute(
-            """
-        SELECT table_schema,
+            """SELECT table_schema,
                 table_name,
                 table_type
             FROM information_schema.tables c
@@ -153,6 +154,7 @@ def discover_catalog(mssql_conn, config):
                 table_info[db] = {}
 
             table_info[db][table] = {"row_count": None, "is_view": table_type == "VIEW"}
+        LOGGER.info("Tables fetched, fetching columns")
         cur.execute(
             """with constraint_columns as (
                 select c.table_schema
@@ -192,6 +194,7 @@ def discover_catalog(mssql_conn, config):
         while rec is not None:
             columns.append(Column(*rec))
             rec = cur.fetchone()
+        LOGGER.info("Columns Fetched")
         entries = []
         for (k, cols) in itertools.groupby(columns, lambda c: (c.table_schema, c.table_name)):
             cols = list(cols)
@@ -230,7 +233,7 @@ def discover_catalog(mssql_conn, config):
             )
 
             entries.append(entry)
-
+    LOGGER.info("Catalog ready")
     return Catalog(entries)
 
 
@@ -353,6 +356,7 @@ def get_non_binlog_streams(mssql_conn, catalog, config, state):
       3. any streams that do not have a replication method of LOG_BASED
 
     """
+    mssql_conn = MSSQLConnection(config)
     discovered = discover_catalog(mssql_conn, config)
 
     # Filter catalog to include only selected streams
@@ -426,8 +430,9 @@ def write_schema_message(catalog_entry, bookmark_properties=[]):
     )
 
 
-def do_sync_incremental(mssql_conn, catalog_entry, state, columns):
+def do_sync_incremental(mssql_conn, config, catalog_entry, state, columns):
     LOGGER.info("Stream %s is using incremental replication", catalog_entry.stream)
+    mssql_conn = MSSQLConnection(config)
 
     md_map = metadata.to_map(catalog_entry.metadata)
     replication_key = md_map.get((), {}).get("replication-key")
@@ -441,20 +446,21 @@ def do_sync_incremental(mssql_conn, catalog_entry, state, columns):
 
     write_schema_message(catalog_entry=catalog_entry, bookmark_properties=[replication_key])
 
-    incremental.sync_table(mssql_conn, catalog_entry, state, columns)
+    incremental.sync_table(mssql_conn, config, catalog_entry, state, columns)
 
     singer.write_message(singer.StateMessage(value=copy.deepcopy(state)))
 
 
-def do_sync_full_table(mssql_conn, catalog_entry, state, columns):
+def do_sync_full_table(mssql_conn, config, catalog_entry, state, columns):
     LOGGER.info("Stream %s is using full table replication", catalog_entry.stream)
     key_properties = common.get_key_properties(catalog_entry)
+    mssql_conn = MSSQLConnection(config)
 
     write_schema_message(catalog_entry)
 
     stream_version = common.get_stream_version(catalog_entry.tap_stream_id, state)
 
-    full_table.sync_table(mssql_conn, catalog_entry, state, columns, stream_version)
+    full_table.sync_table(mssql_conn, config, catalog_entry, state, columns, stream_version)
 
     # Prefer initial_full_table_complete going forward
     singer.clear_bookmark(state, catalog_entry.tap_stream_id, "version")
@@ -467,6 +473,8 @@ def do_sync_full_table(mssql_conn, catalog_entry, state, columns):
 
 
 def sync_non_binlog_streams(mssql_conn, non_binlog_catalog, config, state):
+    mssql_conn = MSSQLConnection(config)
+
     for catalog_entry in non_binlog_catalog.streams:
         columns = list(catalog_entry.schema.properties.keys())
 
@@ -492,9 +500,9 @@ def sync_non_binlog_streams(mssql_conn, non_binlog_catalog, config, state):
             timer.tags["table"] = catalog_entry.table
 
             if replication_method == "INCREMENTAL":
-                do_sync_incremental(mssql_conn, catalog_entry, state, columns)
+                do_sync_incremental(mssql_conn, config, catalog_entry, state, columns)
             elif replication_method == "FULL_TABLE":
-                do_sync_full_table(mssql_conn, catalog_entry, state, columns)
+                do_sync_full_table(mssql_conn, config, catalog_entry, state, columns)
             else:
                 raise Exception("only INCREMENTAL and FULL TABLE replication methods are supported")
 
@@ -503,6 +511,7 @@ def sync_non_binlog_streams(mssql_conn, non_binlog_catalog, config, state):
 
 
 def do_sync(mssql_conn, config, catalog, state):
+    LOGGER.info("Beginning sync")
     non_binlog_catalog = get_non_binlog_streams(mssql_conn, catalog, config, state)
     sync_non_binlog_streams(mssql_conn, non_binlog_catalog, config, state)
 

@@ -32,7 +32,8 @@ def generate_bookmark_keys(catalog_entry):
     return bookmark_keys
 
 
-def sync_table(mssql_conn, catalog_entry, state, columns, stream_version):
+def sync_table(mssql_conn, config, catalog_entry, state, columns, stream_version):
+    mssql_conn = MSSQLConnection(config)
     common.whitelist_bookmark_keys(
         generate_bookmark_keys(catalog_entry), catalog_entry.tap_stream_id, state
     )

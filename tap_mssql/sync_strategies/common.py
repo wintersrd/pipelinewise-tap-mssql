@@ -15,8 +15,8 @@ LOGGER = singer.get_logger()
 
 def escape(string):
     if "`" in string:
-        raise Exception("Can't escape identifier {} because it contains a backtick".format(string))
-    return "`" + string + "`"
+        raise Exception("Can't escape identifier {} because it contains a double quote".format(string))
+    return "\"" + string + "\""
 
 
 def generate_tap_stream_id(table_schema, table_name):
@@ -137,11 +137,10 @@ def whitelist_bookmark_keys(bookmark_key_set, tap_stream_id, state):
 def sync_query(cursor, catalog_entry, state, select_sql, columns, stream_version, params):
     replication_key = singer.get_bookmark(state, catalog_entry.tap_stream_id, "replication_key")
 
-    query_string = cursor.mogrify(select_sql, params)
+    # query_string = cursor.mogrify(select_sql, params)
 
     time_extracted = utils.now()
-
-    LOGGER.info("Running %s", query_string)
+    LOGGER.info("Running %s", select_sql)
     cursor.execute(select_sql, params)
 
     row = cursor.fetchone()
