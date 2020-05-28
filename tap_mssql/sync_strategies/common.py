@@ -140,7 +140,6 @@ def sync_query(cursor, catalog_entry, state, select_sql, columns, stream_version
     # query_string = cursor.mogrify(select_sql, params)
 
     time_extracted = utils.now()
-    LOGGER.info("Running %s", select_sql)
     cursor.execute(select_sql, params)
 
     row = cursor.fetchone()
@@ -159,7 +158,6 @@ def sync_query(cursor, catalog_entry, state, select_sql, columns, stream_version
                 catalog_entry, stream_version, row, columns, time_extracted
             )
             singer.write_message(record_message)
-
             md_map = metadata.to_map(catalog_entry.metadata)
             stream_metadata = md_map.get((), {})
             replication_method = stream_metadata.get("replication-method")

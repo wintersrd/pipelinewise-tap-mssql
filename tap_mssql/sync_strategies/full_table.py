@@ -24,10 +24,7 @@ def generate_bookmark_keys(catalog_entry):
         "initial_full_table_complete",
     }
 
-    if replication_method == "FULL_TABLE":
-        bookmark_keys = base_bookmark_keys
-    else:
-        bookmark_keys = base_bookmark_keys.union(binlog.BOOKMARK_KEYS)
+    bookmark_keys = base_bookmark_keys
 
     return bookmark_keys
 

@@ -52,7 +52,7 @@ BYTES_FOR_INTEGER_TYPE = {"tinyint": 1, "smallint": 2, "mediumint": 3, "int": 4,
 
 FLOAT_TYPES = set(["float", "double", "money"])
 
-DATETIME_TYPES = set(["datetime", "timestamp", "date", "time"])
+DATETIME_TYPES = set(["datetime", "timestamp", "date", "time",])
 
 VARIANT_TYPES = set(["json"])
 
@@ -62,6 +62,9 @@ def schema_for_column(c):
     data_type = c.data_type.lower()
 
     inclusion = "available"
+
+    if c.is_primary_key == 1:
+        inclusion = "automatic"
 
     result = Schema(inclusion=inclusion)
 
@@ -435,17 +438,8 @@ def do_sync_incremental(mssql_conn, config, catalog_entry, state, columns):
     mssql_conn = MSSQLConnection(config)
 
     md_map = metadata.to_map(catalog_entry.metadata)
-    replication_key = md_map.get((), {}).get("replication-key")
-
-    if not replication_key:
-        raise Exception(
-            "Cannot use INCREMENTAL replication for table ({}) without a replication key.".format(
-                catalog_entry.stream
-            )
-        )
-
+    stream_version = common.get_stream_version(catalog_entry.tap_stream_id, state)
     write_schema_message(catalog_entry=catalog_entry, bookmark_properties=[replication_key])
-
     incremental.sync_table(mssql_conn, config, catalog_entry, state, columns)
 
     singer.write_message(singer.StateMessage(value=copy.deepcopy(state)))
@@ -492,6 +486,16 @@ def sync_non_binlog_streams(mssql_conn, non_binlog_catalog, config, state):
         md_map = metadata.to_map(catalog_entry.metadata)
 
         replication_method = md_map.get((), {}).get("replication-method")
+        replication_key = md_map.get((), {}).get("replication-key")
+        primary_keys = md_map.get((), {}).get("table-key-properties")
+        LOGGER.info(f"Table {catalog_entry.table} proposes {replication_method} sync")
+        if replication_method == "INCREMENTAL" and not replication_key:
+            LOGGER.info(f"No replication key for {catalog_entry.table}, using full table replication")
+            replication_method = "FULL_TABLE"
+        if replication_method == "INCREMENTAL" and not primary_keys:
+            LOGGER.info(f"No primary key for {catalog_entry.table}, using full table replication")
+            replication_method = "FULL_TABLE"
+        LOGGER.info(f"Table {catalog_entry.table} will use {replication_method} sync")
 
         database_name = common.get_database_name(catalog_entry)
 
@@ -500,8 +504,10 @@ def sync_non_binlog_streams(mssql_conn, non_binlog_catalog, config, state):
             timer.tags["table"] = catalog_entry.table
 
             if replication_method == "INCREMENTAL":
+                LOGGER.info(f"syncing {catalog_entry.table} incrementally")
                 do_sync_incremental(mssql_conn, config, catalog_entry, state, columns)
             elif replication_method == "FULL_TABLE":
+                LOGGER.info(f"syncing {catalog_entry.table} full table")
                 do_sync_full_table(mssql_conn, config, catalog_entry, state, columns)
             else:
                 raise Exception("only INCREMENTAL and FULL TABLE replication methods are supported")
@@ -513,6 +519,8 @@ def sync_non_binlog_streams(mssql_conn, non_binlog_catalog, config, state):
 def do_sync(mssql_conn, config, catalog, state):
     LOGGER.info("Beginning sync")
     non_binlog_catalog = get_non_binlog_streams(mssql_conn, catalog, config, state)
+    for entry in non_binlog_catalog.streams:
+        LOGGER.info(f"Need to sync {entry.table}")
     sync_non_binlog_streams(mssql_conn, non_binlog_catalog, config, state)
 
 
