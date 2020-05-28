@@ -5,6 +5,8 @@ import datetime
 import collections
 import itertools
 from itertools import dropwhile
+import json
+import logging
 import copy
 
 import pymssql
@@ -43,6 +45,8 @@ Column = collections.namedtuple(
 REQUIRED_CONFIG_KEYS = ["host", "database", "user", "password"]
 
 LOGGER = singer.get_logger()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 STRING_TYPES = set(
     ["char", "enum", "longtext", "mediumtext", "text", "varchar", "uniqueidentifier", "nvarchar"]
@@ -170,7 +174,7 @@ def discover_catalog(mssql_conn, config):
                         on tc.table_schema = c.table_schema
                         and tc.table_name = c.table_name
                         and tc.constraint_name = c.constraint_name
-                        and tc.constraint_type = 'PRIMARY KEY')
+                        and tc.constraint_type in ('PRIMARY KEY', 'UNIQUE'))
                 SELECT c.table_schema,
                     c.table_name,
                     c.column_name,
@@ -220,12 +224,9 @@ def discover_catalog(mssql_conn, config):
 
                 md_map = metadata.write(md_map, (), "is-view", is_view)
 
-            column_is_key_prop = lambda c, s: (c.is_primary_key == 1)
+            key_properties = [c.column_name for c in cols if c.is_primary_key == 1]
 
-            key_properties = [c.column_name for c in cols if column_is_key_prop(c, schema)]
-
-            if not is_view:
-                md_map = metadata.write(md_map, (), "table-key-properties", key_properties)
+            md_map = metadata.write(md_map, (), "table-key-properties", key_properties)
 
             entry = CatalogEntry(
                 table=table_name,
@@ -316,13 +317,12 @@ def resolve_catalog(discovered_catalog, streams_to_sync):
 
         selected = {
             k
-            for k, v in catalog_entry.schema.properties.items()
+            for k, v in discovered_table.schema.properties.items()
             if common.property_is_selected(catalog_entry, k) or k == replication_key
         }
 
         # These are the columns we need to select
         columns = desired_columns(selected, discovered_table.schema)
-
         result.streams.append(
             CatalogEntry(
                 tap_stream_id=catalog_entry.tap_stream_id,
@@ -369,6 +369,10 @@ def get_non_binlog_streams(mssql_conn, catalog, config, state):
 
     for stream in selected_streams:
         stream_metadata = metadata.to_map(stream.metadata)
+        # if stream_metadata.table in ["aagaggpercols", "aagaggdef"]:
+        for k, v in stream_metadata.get((), {}).items():
+            LOGGER.info(f"{k}: {v}")
+            # LOGGER.info(stream_metadata.get((), {}).get("table-key-properties"))
         replication_method = stream_metadata.get((), {}).get("replication-method")
         stream_state = state.get("bookmarks", {}).get(stream.tap_stream_id)
 
@@ -434,19 +438,18 @@ def write_schema_message(catalog_entry, bookmark_properties=[]):
 
 
 def do_sync_incremental(mssql_conn, config, catalog_entry, state, columns):
-    LOGGER.info("Stream %s is using incremental replication", catalog_entry.stream)
     mssql_conn = MSSQLConnection(config)
-
     md_map = metadata.to_map(catalog_entry.metadata)
     stream_version = common.get_stream_version(catalog_entry.tap_stream_id, state)
+    replication_key = md_map.get((), {}).get("replication-key")
     write_schema_message(catalog_entry=catalog_entry, bookmark_properties=[replication_key])
+    LOGGER.info("Schema written")
     incremental.sync_table(mssql_conn, config, catalog_entry, state, columns)
 
     singer.write_message(singer.StateMessage(value=copy.deepcopy(state)))
 
 
 def do_sync_full_table(mssql_conn, config, catalog_entry, state, columns):
-    LOGGER.info("Stream %s is using full table replication", catalog_entry.stream)
     key_properties = common.get_key_properties(catalog_entry)
     mssql_conn = MSSQLConnection(config)
 
@@ -484,7 +487,6 @@ def sync_non_binlog_streams(mssql_conn, non_binlog_catalog, config, state):
         singer.write_message(singer.StateMessage(value=copy.deepcopy(state)))
 
         md_map = metadata.to_map(catalog_entry.metadata)
-
         replication_method = md_map.get((), {}).get("replication-method")
         replication_key = md_map.get((), {}).get("replication-key")
         primary_keys = md_map.get((), {}).get("table-key-properties")
