@@ -49,10 +49,27 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 STRING_TYPES = set(
-    ["char", "enum", "longtext", "mediumtext", "text", "varchar", "uniqueidentifier", "nvarchar"]
+    [
+        "char",
+        "enum",
+        "longtext",
+        "mediumtext",
+        "text",
+        "varchar",
+        "uniqueidentifier",
+        "nvarchar",
+        "nchar",
+    ]
 )
 
-BYTES_FOR_INTEGER_TYPE = {"tinyint": 1, "smallint": 2, "mediumint": 3, "int": 4, "bigint": 8}
+BYTES_FOR_INTEGER_TYPE = {
+    "tinyint": 1,
+    "smallint": 2,
+    "mediumint": 3,
+    "int": 4,
+    "real": 4,
+    "bigint": 8,
+}
 
 FLOAT_TYPES = set(["float", "double", "money"])
 
