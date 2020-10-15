@@ -15,8 +15,10 @@ LOGGER = singer.get_logger()
 
 def escape(string):
     if "`" in string:
-        raise Exception("Can't escape identifier {} because it contains a double quote".format(string))
-    return "\"" + string + "\""
+        raise Exception(
+            "Can't escape identifier {} because it contains a double quote".format(string)
+        )
+    return '"' + string + '"'
 
 
 def generate_tap_stream_id(table_schema, table_name):
@@ -115,7 +117,8 @@ def row_to_singer_record(catalog_entry, version, row, columns, time_extracted):
             else:
                 boolean_representation = True
             row_to_persist += (boolean_representation,)
-
+        elif isinstance(elem, uuid.UUID):
+            row_to_persist += (str(elem),)
         else:
             row_to_persist += (elem,)
     rec = dict(zip(columns, row_to_persist))
