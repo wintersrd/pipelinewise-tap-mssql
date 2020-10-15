@@ -8,6 +8,7 @@ from itertools import dropwhile
 import json
 import logging
 import copy
+import uuid
 
 import pymssql
 

@@ -5,6 +5,7 @@ import copy
 import datetime
 import singer
 import time
+import uuid
 
 import singer.metrics as metrics
 from singer import metadata
