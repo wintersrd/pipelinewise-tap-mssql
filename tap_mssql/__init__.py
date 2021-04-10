@@ -101,7 +101,7 @@ def schema_for_column(c):
 
     elif data_type in FLOAT_TYPES:
         result.type = ["null", "number"]
-        result.multipleOf = 10 ** (0 - c.numeric_scale or 6)
+        result.multipleOf = 10 ** (0 - (c.numeric_scale or 6))
 
     elif data_type in ["decimal", "numeric"]:
         result.type = ["null", "number"]
