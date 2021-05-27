@@ -144,9 +144,12 @@ def sync_query(cursor, catalog_entry, state, select_sql, columns, stream_version
     # query_string = cursor.mogrify(select_sql, params)
 
     time_extracted = utils.now()
-    cursor.execute(select_sql, params)
 
-    row = cursor.fetchone()
+    if len(params) == 0:
+        results = cursor.execute(select_sql)
+    else:
+        results = cursor.execute(select_sql, params['replication_key_value'])
+    row = results.fetchone()
     rows_saved = 0
 
     database_name = get_database_name(catalog_entry)
@@ -197,6 +200,6 @@ def sync_query(cursor, catalog_entry, state, select_sql, columns, stream_version
             if rows_saved % 1000 == 0:
                 singer.write_message(singer.StateMessage(value=copy.deepcopy(state)))
 
-            row = cursor.fetchone()
+            row = results.fetchone()
 
     singer.write_message(singer.StateMessage(value=copy.deepcopy(state)))
