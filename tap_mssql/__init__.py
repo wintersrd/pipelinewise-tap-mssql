@@ -68,11 +68,10 @@ BYTES_FOR_INTEGER_TYPE = {
     "smallint": 2,
     "mediumint": 3,
     "int": 4,
-    "real": 4,
     "bigint": 8,
 }
 
-FLOAT_TYPES = set(["float", "double", "money"])
+FLOAT_TYPES = set(["float", "double", "money", "real"])
 
 DATETIME_TYPES = set(["datetime", "timestamp", "date", "time", "smalldatetime"])
 
