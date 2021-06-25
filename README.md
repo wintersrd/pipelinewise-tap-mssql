@@ -68,6 +68,14 @@ Create a config file containing the database connection credentials, e.g.:
 }
 ```
 
+Windows Authentication is available! Don't provide a user or password and pymssql will use the user that is running the process on windows to login.
+e.g.:
+```json
+{
+  "host": "localhost"
+}
+```
+
 These are the same basic configuration properties used by the mssql command-line
 client (`mssql`).
 
