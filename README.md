@@ -62,6 +62,7 @@ Create a config file containing the database connection credentials, e.g.:
 ```json
 {
   "host": "localhost",
+  "database": "db",
   "port": "3306",
   "user": "root",
   "password": "password"
@@ -72,7 +73,8 @@ Windows Authentication is available! Don't provide a user or password and pymssq
 e.g.:
 ```json
 {
-  "host": "localhost"
+  "host": "localhost",
+  "database": "db"
 }
 ```
 
