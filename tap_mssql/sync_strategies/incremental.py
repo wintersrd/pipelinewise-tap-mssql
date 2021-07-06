@@ -53,9 +53,9 @@ def sync_table(mssql_conn, config, catalog_entry, state, columns):
 
             if replication_key_value is not None:
                 if catalog_entry.schema.properties[replication_key_metadata].format == "date-time":
-                    replication_key_value = pendulum.parse(replication_key_value)
+                    replication_key_value = pendulum.parse(replication_key_value).to_iso8601_string()
 
-                select_sql += " WHERE \"{}\" > %(replication_key_value)s ORDER BY \"{}\" ASC".format(
+                select_sql += " WHERE \"{}\" > convert(datetimeoffset, %(replication_key_value)s, 127) ORDER BY \"{}\" ASC".format(
                     replication_key_metadata, replication_key_metadata
                 )
 
