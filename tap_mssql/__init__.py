@@ -510,6 +510,10 @@ def sync_non_binlog_streams(mssql_conn, non_binlog_catalog, config, state):
         replication_key = md_map.get((), {}).get("replication-key")
         primary_keys = md_map.get((), {}).get("table-key-properties")
         LOGGER.info(f"Table {catalog_entry.table} proposes {replication_method} sync")
+        if not replication_method and config.get("default_replication_method"):
+            replication_method= config.get("default_replication_method") 
+            LOGGER.info(f"Table {catalog_entry.table} reverting to DEFAULT {replication_method} sync")
+
         if replication_method == "INCREMENTAL" and not replication_key:
             LOGGER.info(
                 f"No replication key for {catalog_entry.table}, using full table replication"
