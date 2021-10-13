@@ -7,7 +7,10 @@ from singer import metadata
 
 import tap_mssql.sync_strategies.common as common
 
-from tap_mssql.connection import connect_with_backoff, MSSQLConnection
+from tap_mssql.connection import (
+    connect_with_backoff,
+    get_azure_sql_engine,
+)
 
 LOGGER = singer.get_logger()
 
@@ -30,7 +33,7 @@ def generate_bookmark_keys(catalog_entry):
 
 
 def sync_table(mssql_conn, config, catalog_entry, state, columns, stream_version):
-    mssql_conn = MSSQLConnection(config)
+    mssql_conn = get_azure_sql_engine(config)
     common.whitelist_bookmark_keys(
         generate_bookmark_keys(catalog_entry), catalog_entry.tap_stream_id, state
     )
@@ -50,18 +53,20 @@ def sync_table(mssql_conn, config, catalog_entry, state, columns, stream_version
 
     # For the initial replication, emit an ACTIVATE_VERSION message
     # at the beginning so the records show up right away.
-    if not initial_full_table_complete and not (version_exists and state_version is None):
+    if not initial_full_table_complete and not (
+        version_exists and state_version is None
+    ):
         singer.write_message(activate_version_message)
 
-    with connect_with_backoff(mssql_conn) as open_conn:
-        with open_conn.cursor() as cur:
-            select_sql = common.generate_select_sql(catalog_entry, columns)
+    with mssql_conn.connect() as open_conn:
+        LOGGER.info("Generating select_sql")
+        select_sql = common.generate_select_sql(catalog_entry, columns)
 
-            params = {}
+        params = {}
 
-            common.sync_query(
-                cur, catalog_entry, state, select_sql, columns, stream_version, params
-            )
+        common.sync_query(
+            open_conn, catalog_entry, state, select_sql, columns, stream_version, params
+        )
 
     # clear max pk value and last pk fetched upon successful sync
     singer.clear_bookmark(state, catalog_entry.tap_stream_id, "max_pk_values")
