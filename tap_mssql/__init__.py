@@ -23,6 +23,7 @@ from singer.catalog import Catalog, CatalogEntry
 import tap_mssql.sync_strategies.common as common
 import tap_mssql.sync_strategies.full_table as full_table
 import tap_mssql.sync_strategies.incremental as incremental
+import tap_mssql.sync_strategies.logical as logical
 
 from tap_mssql.connection import (
     connect_with_backoff,
@@ -507,6 +508,60 @@ def do_sync_full_table(mssql_conn, config, catalog_entry, state, columns):
     singer.write_message(singer.StateMessage(value=copy.deepcopy(state)))
 
 
+def do_sync_log_based_table(mssql_conn, config, catalog_entry, state, columns):
+
+    key_properties = common.get_key_properties(catalog_entry)
+
+    write_schema_message(catalog_entry)
+
+    stream_version = common.get_stream_version(catalog_entry.tap_stream_id, state)
+
+    # initial instance of log_based connector class
+    log_based = logical.log_based_sync(
+        mssql_conn, config, catalog_entry, state, columns
+    )
+
+    # assert all of the log_based prereq's are met
+    log_based.assert_log_based_is_enabled()
+
+    # create state if none exists
+    initial_full_table_complete = log_based.log_based_init_state()
+
+    if not initial_full_table_complete:
+        state = singer.write_bookmark(
+            state,
+            catalog_entry.tap_stream_id,
+            "initial_full_table_complete",
+            log_based.initial_full_table_complete,
+        )
+        state = singer.write_bookmark(
+            state,
+            catalog_entry.tap_stream_id,
+            "current_log_version",
+            log_based.current_log_version,
+        )
+
+        log_based.state = state
+
+    initial_load = log_based.log_based_initial_full_table()
+
+    if initial_load:
+        do_sync_full_table(mssql_conn, config, catalog_entry, state, columns)
+        state = singer.write_bookmark(
+            state, catalog_entry.tap_stream_id, "initial_full_table_complete", True
+        )
+        state = singer.write_bookmark(
+            state,
+            catalog_entry.tap_stream_id,
+            "current_log_version",
+            log_based.current_log_version,
+        )
+
+    else:
+        LOGGER.info("Continue log-based syncing")
+        log_based.execute_log_based_sync()
+
+
 def sync_non_binlog_streams(mssql_conn, non_binlog_catalog, config, state):
 
     for catalog_entry in non_binlog_catalog.streams:
@@ -553,6 +608,13 @@ def sync_non_binlog_streams(mssql_conn, non_binlog_catalog, config, state):
             elif replication_method == "FULL_TABLE":
                 LOGGER.info(f"syncing {catalog_entry.table} full table")
                 do_sync_full_table(mssql_conn, config, catalog_entry, state, columns)
+            elif replication_method == "LOG_BASED":
+                LOGGER.info(
+                    f"syncing {catalog_entry.table} using replication method LOG_BASED"
+                )
+                do_sync_log_based_table(
+                    mssql_conn, config, catalog_entry, state, columns
+                )
             else:
                 raise Exception(
                     "only INCREMENTAL and FULL TABLE replication methods are supported"

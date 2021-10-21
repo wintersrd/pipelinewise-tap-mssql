@@ -10,6 +10,8 @@ from sqlalchemy.engine import Engine
 import singer
 import ssl
 
+from urllib.parse import quote_plus
+
 LOGGER = singer.get_logger()
 
 
@@ -36,7 +38,7 @@ def get_azure_sql_engine(config) -> Engine:
     conn_values = {
         "prefix": "mssql+pyodbc://",
         "username": config["user"],
-        "password": config["password"],
+        "password": quote_plus(config["password"]),
         "port": config.get("port", "1433"),
         "host": config["host"],
         "driver": "ODBC+Driver+17+for+SQL+Server",

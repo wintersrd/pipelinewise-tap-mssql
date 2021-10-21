@@ -17,7 +17,9 @@ LOGGER = singer.get_logger()
 def escape(string):
     if "`" in string:
         raise Exception(
-            "Can't escape identifier {} because it contains a double quote".format(string)
+            "Can't escape identifier {} because it contains a double quote".format(
+                string
+            )
         )
     return '"' + string + '"'
 
@@ -83,7 +85,9 @@ def generate_select_sql(catalog_entry, columns):
     escaped_table = escape(catalog_entry.table)
     escaped_columns = [escape(c) for c in columns]
 
-    select_sql = "SELECT {} FROM {}.{}".format(",".join(escaped_columns), escaped_db, escaped_table)
+    select_sql = "SELECT {} FROM {}.{}".format(
+        ",".join(escaped_columns), escaped_db, escaped_table
+    )
 
     # escape percent signs
     select_sql = select_sql.replace("%", "%%")
@@ -92,8 +96,13 @@ def generate_select_sql(catalog_entry, columns):
 
 def row_to_singer_record(catalog_entry, version, row, columns, time_extracted):
     row_to_persist = ()
+    md_map = metadata.to_map(catalog_entry.metadata)
+    md_map[("properties", "_sdc_deleted_at")] = {
+        "sql-datatype": "datetime"  # maybe datetimeoffset??
+    }
     for idx, elem in enumerate(row):
-        property_type = catalog_entry.schema.properties[columns[idx]].type
+        # property_type = catalog_entry.schema.properties[columns[idx]].type
+        property_type = md_map.get(("properties", columns[idx])).get("sql-datatype")
         if isinstance(elem, datetime.datetime):
             row_to_persist += (elem.isoformat() + "+00:00",)
 
@@ -125,21 +134,30 @@ def row_to_singer_record(catalog_entry, version, row, columns, time_extracted):
     rec = dict(zip(columns, row_to_persist))
 
     return singer.RecordMessage(
-        stream=catalog_entry.stream, record=rec, version=version, time_extracted=time_extracted
+        stream=catalog_entry.stream,
+        record=rec,
+        version=version,
+        time_extracted=time_extracted,
     )
 
 
 def whitelist_bookmark_keys(bookmark_key_set, tap_stream_id, state):
     for bk in [
         non_whitelisted_bookmark_key
-        for non_whitelisted_bookmark_key in state.get("bookmarks", {}).get(tap_stream_id, {}).keys()
+        for non_whitelisted_bookmark_key in state.get("bookmarks", {})
+        .get(tap_stream_id, {})
+        .keys()
         if non_whitelisted_bookmark_key not in bookmark_key_set
     ]:
         singer.clear_bookmark(state, tap_stream_id, bk)
 
 
-def sync_query(cursor, catalog_entry, state, select_sql, columns, stream_version, params):
-    replication_key = singer.get_bookmark(state, catalog_entry.tap_stream_id, "replication_key")
+def sync_query(
+    cursor, catalog_entry, state, select_sql, columns, stream_version, params
+):
+    replication_key = singer.get_bookmark(
+        state, catalog_entry.tap_stream_id, "replication_key"
+    )
 
     # query_string = cursor.mogrify(select_sql, params)
 
@@ -147,7 +165,7 @@ def sync_query(cursor, catalog_entry, state, select_sql, columns, stream_version
     if len(params) == 0:
         results = cursor.execute(select_sql)
     else:
-        results = cursor.execute(select_sql, params['replication_key_value'])
+        results = cursor.execute(select_sql, params["replication_key_value"])
     row = results.fetchone()
     rows_saved = 0
 
@@ -177,17 +195,25 @@ def sync_query(cursor, catalog_entry, state, select_sql, columns, stream_version
 
                 if max_pk_values:
                     last_pk_fetched = {
-                        k: v for k, v in record_message.record.items() if k in key_properties
+                        k: v
+                        for k, v in record_message.record.items()
+                        if k in key_properties
                     }
 
                     state = singer.write_bookmark(
-                        state, catalog_entry.tap_stream_id, "last_pk_fetched", last_pk_fetched
+                        state,
+                        catalog_entry.tap_stream_id,
+                        "last_pk_fetched",
+                        last_pk_fetched,
                     )
 
             elif replication_method == "INCREMENTAL":
                 if replication_key is not None:
                     state = singer.write_bookmark(
-                        state, catalog_entry.tap_stream_id, "replication_key", replication_key
+                        state,
+                        catalog_entry.tap_stream_id,
+                        "replication_key",
+                        replication_key,
                     )
 
                     state = singer.write_bookmark(
