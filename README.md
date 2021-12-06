@@ -2,11 +2,13 @@
 
 [Singer](https://www.singer.io/) tap that extracts data from a [mssql](https://www.mssql.com/) database and produces JSON-formatted data following the [Singer spec](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md).
 
-This is a [PipelineWise](https://transferwise.github.io/pipelinewise) compatible tap connector.
+This is a fork from a [PipelineWise](https://transferwise.github.io/pipelinewise) compatible tap connector to add a log_based replication method for use with [Change Tracking](https://docs.microsoft.com/en-us/sql/relational-databases/track-changes/about-change-tracking-sql-server).
 
 ## How to use it
 
 The recommended method of running this tap is to use it from [PipelineWise](https://transferwise.github.io/pipelinewise). When running it from PipelineWise you don't need to configure this tap with JSON files and most of things are automated. Please check the related documentation at [Tap mssql](https://transferwise.github.io/pipelinewise/connectors/taps/mssql.html)
+
+This tap has also been tested with [Meltano](https://meltano.com) and can be configured as part of their ELT for the DataOps era.
 
 If you want to run this [Singer Tap](https://singer.io) independently please read further.
 
@@ -274,8 +276,8 @@ resultant stream of JSON data can be consumed by a Singer target.
 ## Replication methods and state file
 
 In the above example, we invoked `tap-mssql` without providing a _state_ file
-and without specifying a replication method. The two ways to replicate a given
-table are `FULL_TABLE` and `INCREMENTAL`.
+and without specifying a replication method. The three ways to replicate a given
+table are `FULL_TABLE`, `INCREMENTAL`, and `LOG_BASED`.
 
 ### Full Table
 
@@ -288,7 +290,12 @@ Incremental replication works in conjunction with a state file to only extract
 new records each time the tap is invoked. This requires a replication key to be
 specified in the table's metadata as well.
 
-#### Example
+### Log Based
+
+Log based replication works in conjunction with a state file to extract
+new and changed records that have been recorded by SQL Server Change Tracking each time the tap is invoked. This requires change tracking to be enabled on the source database as well as each table to be replicated with this method. The initial sync with this method will default to full table, and log based replication will occur on subsequent runs.
+
+#### Examples
 
 Let's sync the `animals` table again, but this time using incremental
 replication. The replication method and replication key are set in the
