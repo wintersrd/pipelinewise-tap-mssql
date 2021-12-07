@@ -40,6 +40,12 @@ or
   pip install .
 ```
 
+To exit the virtualenv, just run:
+
+```bash
+  deactivate
+```
+
 ### Have a source database
 
 There's some important business data siloed in this mssql database -- we need to
