@@ -98,8 +98,8 @@ class log_based_sync:
                 table_is_change_tracking_enabled = True
             else:
                 raise Exception(
-                    "Cannot sync stream using log-based replication. Change tracking is not enabled for table: {}"
-                ).format(self.schema_table)
+                    f"Cannot sync stream using log-based replication. Change tracking is not enabled for table: {self.table_name}"
+                )
 
         return table_is_change_tracking_enabled  # this should be the table name?
 
@@ -174,6 +174,13 @@ class log_based_sync:
 
         return current_log_version
 
+    def _get_non_key_properties(self, key_properties):
+        """Returns all selected columns excluding key properties"""
+        selected_columns = [
+            column for column in self.columns if column not in key_properties
+        ]
+        return selected_columns if len(selected_columns) == 0 else None
+
     def log_based_initial_full_table(self):
         "Determine if we should run a full load of the table or use state."
 
@@ -198,7 +205,13 @@ class log_based_sync:
     def execute_log_based_sync(self):
         "Confirm we have state and run a log based query. This will be larger."
 
+        self.logger.debug(f"Catalog Entry: {self.catalog_entry}")
+
         key_properties = common.get_key_properties(self.catalog_entry)
+
+        # At least 1 key property is required to execute a log based sync.
+        if not key_properties:
+            raise ValueError(f"Expected at least 1 key property column in the config, got {key_properties}.")
 
         ct_sql_query = self._build_ct_sql_query(key_properties)
         self.logger.info("Executing log-based query: {}".format(ct_sql_query))
@@ -268,14 +281,18 @@ class log_based_sync:
             singer.write_message(singer.StateMessage(value=copy.deepcopy(self.state)))
 
     def _build_ct_sql_query(self, key_properties):
+        """Using Selected columns, return an SQL query to select updated records from Change Tracking"""
+        # Order column list in alphabetical order starting with key_properties then other columns
+        selected_columns = self._get_non_key_properties(key_properties)
+
+        # Generate SQL Query - Jinja Template?
+
+        # Try/Catch Error Handling and Logging
+
+
 
         # make this a separate function?
         # key_properties = common.get_key_properties(self.catalog_entry)
-        selected_columns = [
-            column for column in self.columns if column not in key_properties
-        ]
-        # if no primary keys, skip with error
-        # "No primary key(s) found, must have a primary key to replicate")
         key_join_list = []
         for key in key_properties:
             # primary_key_join_string = "c.{}={}.{}.{}".format(
