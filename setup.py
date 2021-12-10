@@ -20,6 +20,7 @@ setup(
         "sqlalchemy<2.0.0",
         "pyodbc==4.0.26",
         "backoff==1.8.0",
+        "jinja2==2.11.3",
     ],
     entry_points="""
           [console_scripts]
