@@ -111,8 +111,9 @@ def schema_for_column(c):
 
     elif data_type in STRING_TYPES:
         result.type = ["null", "string"]
-        if c.character_maximum_length >= 0:
-            result.maxLength = c.character_maximum_length
+        #When length is -1 it is a long column type https://docs.microsoft.com/en-us/sql/relational-databases/system-information-schema-views/columns-transact-sql?view=sql-server-ver15
+        #-1 is not valid JSON schema https://json-schema.org/understanding-json-schema/reference/string.html#length
+        if (c.character_maximum_length != -1): result.maxLength = c.character_maximum_length
 
     elif data_type in DATETIME_TYPES:
         result.type = ["null", "string"]
