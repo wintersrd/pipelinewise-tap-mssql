@@ -26,7 +26,7 @@ It's recommended to use a virtualenv:
 
 ```bash
   python3 -m venv venv
-  pip install pipelinewise-tap-mssql
+  pip install tap-mssql
 ```
 
 or
@@ -35,8 +35,14 @@ or
   python3 -m venv venv
   . venv/bin/activate
   pip install --upgrade pip
-  pip install .
+  pip install tap-mssql
 ```
+#### Additional OS X Requirements
+In the event you encounter install issues on OS X stating `fatal error: 'sqlfront.h' file not found`, install FreeTDS with SQL Server compatibility:
+
+1. Download the latest version from [FreeTDS](https://www.freetds.org/)
+2. Extract and run `./configure --enable-msdblib`
+3. Run `make && make install`
 
 ### Have a source database
 
