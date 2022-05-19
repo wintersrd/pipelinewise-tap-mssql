@@ -68,11 +68,12 @@ BYTES_FOR_INTEGER_TYPE = {
     "smallint": 2,
     "mediumint": 3,
     "int": 4,
-    "real": 4,
     "bigint": 8,
 }
 
-FLOAT_TYPES = set(["float", "double", "money"])
+FLOAT_TYPES = set(["float", "double", "real"])
+
+DECIMAL_TYPES = set(["decimal", "number", "money"])
 
 DATETIME_TYPES = set(["datetime", "timestamp", "date", "time", "smalldatetime"])
 
@@ -101,16 +102,17 @@ def schema_for_column(c):
 
     elif data_type in FLOAT_TYPES:
         result.type = ["null", "number"]
-        result.multipleOf = 10 ** (0 - (c.numeric_scale or 6))
+        result.multipleOf = 10 ** (0 - (c.numeric_scale or 17))
 
-    elif data_type in ["decimal", "numeric"]:
+    elif data_type in DECIMAL_TYPES:
         result.type = ["null", "number"]
         result.multipleOf = 10 ** (0 - c.numeric_scale)
         return result
 
     elif data_type in STRING_TYPES:
         result.type = ["null", "string"]
-        result.maxLength = c.character_maximum_length
+        if c.character_maximum_length >= 0:
+            result.maxLength = c.character_maximum_length
 
     elif data_type in DATETIME_TYPES:
         result.type = ["null", "string"]
@@ -120,7 +122,11 @@ def schema_for_column(c):
         result.type = ["null", "object"]
 
     else:
-        result = Schema(None, inclusion="unsupported", description="Unsupported column type",)
+        result = Schema(
+            None,
+            inclusion="unsupported",
+            description="Unsupported column type",
+        )
     return result
 
 
@@ -135,9 +141,7 @@ def create_column_metadata(cols):
             "selected-by-default",
             schema.inclusion != "unsupported",
         )
-        mdata = metadata.write(
-            mdata, ("properties", c.column_name), "sql-datatype", c.data_type.lower()
-        )
+        mdata = metadata.write(mdata, ("properties", c.column_name), "sql-datatype", c.data_type.lower())
 
     return metadata.to_list(mdata)
 
@@ -225,9 +229,7 @@ def discover_catalog(mssql_conn, config):
         for (k, cols) in itertools.groupby(columns, lambda c: (c.table_schema, c.table_name)):
             cols = list(cols)
             (table_schema, table_name) = k
-            schema = Schema(
-                type="object", properties={c.column_name: schema_for_column(c) for c in cols}
-            )
+            schema = Schema(type="object", properties={c.column_name: schema_for_column(c) for c in cols})
             md = create_column_metadata(cols)
             md_map = metadata.to_map(md)
 
@@ -411,15 +413,12 @@ def get_non_binlog_streams(mssql_conn, catalog, config, state):
     if currently_syncing:
         currently_syncing_stream = list(
             filter(
-                lambda s: s.tap_stream_id == currently_syncing
-                and is_valid_currently_syncing_stream(s, state),
+                lambda s: s.tap_stream_id == currently_syncing and is_valid_currently_syncing_stream(s, state),
                 streams_with_state,
             )
         )
 
-        non_currently_syncing_streams = list(
-            filter(lambda s: s.tap_stream_id != currently_syncing, ordered_streams)
-        )
+        non_currently_syncing_streams = list(filter(lambda s: s.tap_stream_id != currently_syncing, ordered_streams))
 
         streams_to_sync = currently_syncing_stream + non_currently_syncing_streams
     else:
@@ -481,9 +480,7 @@ def do_sync_full_table(mssql_conn, config, catalog_entry, state, columns):
     # Prefer initial_full_table_complete going forward
     singer.clear_bookmark(state, catalog_entry.tap_stream_id, "version")
 
-    state = singer.write_bookmark(
-        state, catalog_entry.tap_stream_id, "initial_full_table_complete", True
-    )
+    state = singer.write_bookmark(state, catalog_entry.tap_stream_id, "initial_full_table_complete", True)
 
     singer.write_message(singer.StateMessage(value=copy.deepcopy(state)))
 
@@ -495,9 +492,7 @@ def sync_non_binlog_streams(mssql_conn, non_binlog_catalog, config, state):
         columns = list(catalog_entry.schema.properties.keys())
 
         if not columns:
-            LOGGER.warning(
-                "There are no columns selected for stream %s, skipping it.", catalog_entry.stream
-            )
+            LOGGER.warning("There are no columns selected for stream %s, skipping it.", catalog_entry.stream)
             continue
 
         state = singer.set_currently_syncing(state, catalog_entry.tap_stream_id)
@@ -508,12 +503,10 @@ def sync_non_binlog_streams(mssql_conn, non_binlog_catalog, config, state):
         md_map = metadata.to_map(catalog_entry.metadata)
         replication_method = md_map.get((), {}).get("replication-method")
         replication_key = md_map.get((), {}).get("replication-key")
-        primary_keys = md_map.get((), {}).get("table-key-properties")
+        primary_keys = common.get_key_properties(catalog_entry)
         LOGGER.info(f"Table {catalog_entry.table} proposes {replication_method} sync")
         if replication_method == "INCREMENTAL" and not replication_key:
-            LOGGER.info(
-                f"No replication key for {catalog_entry.table}, using full table replication"
-            )
+            LOGGER.info(f"No replication key for {catalog_entry.table}, using full table replication")
             replication_method = "FULL_TABLE"
         if replication_method == "INCREMENTAL" and not primary_keys:
             LOGGER.info(f"No primary key for {catalog_entry.table}, using full table replication")
@@ -554,7 +547,8 @@ def log_server_params(mssql_conn):
                 cur.execute("""SELECT @@VERSION as version, @@lock_timeout as lock_wait_timeout""")
                 row = cur.fetchone()
                 LOGGER.info(
-                    "Server Parameters: " + "version: %s, " + "lock_timeout: %s, ", *row,
+                    "Server Parameters: " + "version: %s, " + "lock_timeout: %s, ",
+                    *row,
                 )
         except:
             LOGGER.warning("Encountered error checking server params. Error: (%s) %s", *e.args)
