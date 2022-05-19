@@ -43,7 +43,7 @@ Column = collections.namedtuple(
     ],
 )
 
-REQUIRED_CONFIG_KEYS = ["host", "database", "user", "password"]
+REQUIRED_CONFIG_KEYS = ["host", "database"]
 
 LOGGER = singer.get_logger()
 logger = logging.getLogger(__name__)

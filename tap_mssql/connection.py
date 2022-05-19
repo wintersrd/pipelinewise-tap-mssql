@@ -30,8 +30,8 @@ def connect_with_backoff(connection):
 class MSSQLConnection(pymssql.Connection):
     def __init__(self, config):
         args = {
-            "user": config["user"],
-            "password": config["password"],
+            "user": config.get("user"),
+            "password": config.get("password"),
             "server": config["host"],
             "database": config["database"],
             "charset": "utf8",
