@@ -62,9 +62,19 @@ Create a config file containing the database connection credentials, e.g.:
 ```json
 {
   "host": "localhost",
+  "database": "db",
   "port": "3306",
   "user": "root",
   "password": "password"
+}
+```
+
+Windows Authentication is available! Don't provide a user or password and pymssql will use the user that is running the process on windows to login.
+e.g.:
+```json
+{
+  "host": "localhost",
+  "database": "db"
 }
 ```
 
