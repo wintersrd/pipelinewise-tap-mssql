@@ -84,6 +84,24 @@ e.g.:
 }
 ```
 
+Optional:
+
+To filter the discovery to a particular schema within a database. This is useful if you have a large number of schemas and wish to speed up the discovery.
+
+```json
+{
+  "filter_dbs": "your database schema name",
+}
+```
+
+Optional:
+
+To emit a date as a date without a time component. This is helpful to avoid time conversions or to just work with a date datetype in the target database. If this config item is not set, the default behaviour is `false` i.e. emit date datatypes as a datetime.
+```json
+{
+  "use_date_datatype": true
+}
+
 These are the same basic configuration properties used by the mssql command-line
 client (`mssql`).
 

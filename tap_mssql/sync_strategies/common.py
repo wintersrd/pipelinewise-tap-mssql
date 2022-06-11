@@ -89,16 +89,26 @@ def generate_select_sql(catalog_entry, columns):
     select_sql = select_sql.replace("%", "%%")
     return select_sql
 
+def default_date_format():
+    return False
 
-def row_to_singer_record(catalog_entry, version, row, columns, time_extracted):
+def row_to_singer_record(catalog_entry, version, row, columns, time_extracted, config):
     row_to_persist = ()
+    use_date_data_type_format = config.get("use_date_datatype") or default_date_format()
     for idx, elem in enumerate(row):
         property_type = catalog_entry.schema.properties[columns[idx]].type
         if isinstance(elem, datetime.datetime):
             row_to_persist += (elem.isoformat() + "+00:00",)
 
+        elif isinstance(elem, datetime.time):
+            row_to_persist += (elem.isoformat() + "+00:00",)
+
         elif isinstance(elem, datetime.date):
-            row_to_persist += (elem.isoformat() + "T00:00:00+00:00",)
+            if use_date_data_type_format:
+                # Writing Dates with a Date Datatype, not converting it to a datetime.
+                row_to_persist += (elem.isoformat(),)
+            else:
+                row_to_persist += (elem.isoformat() + "T00:00:00+00:00",)
 
         elif isinstance(elem, datetime.timedelta):
             epoch = datetime.datetime.utcfromtimestamp(0)
@@ -106,9 +116,15 @@ def row_to_singer_record(catalog_entry, version, row, columns, time_extracted):
             row_to_persist += (timedelta_from_epoch.isoformat() + "+00:00",)
 
         elif isinstance(elem, bytes):
-            # for BIT value, treat 0 as False and anything else as True
-            boolean_representation = elem != b"\x00"
-            row_to_persist += (boolean_representation,)
+            # for BIT value, treat 0 as False, 1 as True and anything else as hex
+            if elem == b"\x00":
+                boolean_representation = False
+                row_to_persist += (boolean_representation,)
+            elif elem == b"\x01":
+                boolean_representation = True
+                row_to_persist += (boolean_representation,)
+            else:
+                row_to_persist += (str(elem.hex()),)
 
         elif "boolean" in property_type or property_type == "boolean":
             if elem is None:
@@ -138,7 +154,7 @@ def whitelist_bookmark_keys(bookmark_key_set, tap_stream_id, state):
         singer.clear_bookmark(state, tap_stream_id, bk)
 
 
-def sync_query(cursor, catalog_entry, state, select_sql, columns, stream_version, params):
+def sync_query(cursor, catalog_entry, state, select_sql, columns, stream_version, params, config):
     replication_key = singer.get_bookmark(state, catalog_entry.tap_stream_id, "replication_key")
 
     # query_string = cursor.mogrify(select_sql, params)
@@ -159,7 +175,7 @@ def sync_query(cursor, catalog_entry, state, select_sql, columns, stream_version
             counter.increment()
             rows_saved += 1
             record_message = row_to_singer_record(
-                catalog_entry, stream_version, row, columns, time_extracted
+                catalog_entry, stream_version, row, columns, time_extracted, config
             )
             singer.write_message(record_message)
             md_map = metadata.to_map(catalog_entry.metadata)
