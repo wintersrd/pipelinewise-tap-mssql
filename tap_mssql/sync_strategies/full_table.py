@@ -60,7 +60,7 @@ def sync_table(mssql_conn, config, catalog_entry, state, columns, stream_version
             params = {}
 
             common.sync_query(
-                cur, catalog_entry, state, select_sql, columns, stream_version, params
+                cur, catalog_entry, state, select_sql, columns, stream_version, params, config
             )
 
     # clear max pk value and last pk fetched upon successful sync

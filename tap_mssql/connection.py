@@ -37,7 +37,6 @@ class MSSQLConnection(pymssql.Connection):
             "charset": "utf8",
             "port": config.get("port", "1433"),
             "tds_version": config.get("tds_version", "8.0"),
-            "use_date_datatype": config.get("use_date_datatype", False),
         }
         conn = pymssql._mssql.connect(**args)
         super().__init__(conn, False, True)
