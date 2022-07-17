@@ -1,30 +1,41 @@
 import os
-import pymysql
+import pymssql
 import singer
-import tap_mysql
-import tap_mysql.sync_strategies.common as common
-from tap_mysql.connection import MySQLConnection
+import tap_mssql
+import tap_mssql.sync_strategies.common as common
+from tap_mssql.connection import MSSQLConnection
 
-DB_NAME = "tap_mysql_test"
+DB_NAME = "TAP_MSSQL_TEST"
+SCHEMA_NAME = "dbo"
 
 
-def get_db_config():
+def get_db_config(use_env_db_name=False, use_schema_name=False):
     config = {}
-    config["host"] = os.environ.get("TAP_MYSQL_HOST")
-    config["port"] = int(os.environ.get("TAP_MYSQL_PORT"))
-    config["user"] = os.environ.get("TAP_MYSQL_USER")
-    config["password"] = os.environ.get("TAP_MYSQL_PASSWORD")
+    config["user"] = os.environ.get("tap_mssql_USER")
+    config["password"] = os.environ.get("tap_mssql_PASSWORD")
+    config["host"] = os.environ.get("tap_mssql_HOST")
+    config["database"] = DB_NAME
     config["charset"] = "utf8"
+    config["port"] = int(os.environ.get("tap_mssql_PORT"))
+    config["tds_version"] = os.environ.get("tap_mssql_TDS_VERSION", "8.0")
     if not config["password"]:
         del config["password"]
+
+    if use_env_db_name:
+        config["database"] = os.environ.get("tap_mssql_DATABASE")
+    elif use_schema_name:
+        config["database"] = SCHEMA_NAME
 
     return config
 
 
 def get_test_connection():
-    db_config = get_db_config()
+    db_config = get_db_config(use_env_db_name=True)
 
-    con = pymysql.connect(**db_config)
+    # MSSQL Database must be in autocommit mode to Create a Database
+    db_config["autocommit"] = True
+
+    con = pymssql.connect(**db_config)
 
     try:
         with con.cursor() as cur:
@@ -37,22 +48,28 @@ def get_test_connection():
         con.close()
 
     db_config["database"] = DB_NAME
-    db_config["autocommit"] = True
+    db_config["server"] = db_config["host"]
 
-    mysql_conn = MySQLConnection(db_config)
-    mysql_conn.autocommit_mode = True
+    mssql_conn = MSSQLConnection(db_config)
+    mssql_conn.autocommit_mode = True
 
-    return mysql_conn
+    return mssql_conn
 
 
-def discover_catalog(connection, catalog):
-    catalog = tap_mysql.discover_catalog(connection, catalog)
+def discover_catalog(connection, config):
+    catalog = {}
+    config = get_db_config()
+    catalog = tap_mssql.discover_catalog(connection, config)
+
+    # print(f"discovery_catalog = {catalog}")
     streams = []
 
     for stream in catalog.streams:
         database_name = common.get_database_name(stream)
+        print(f"database_name = {database_name}")
+        print(f"stream info = {stream.metadata}")
 
-        if database_name == DB_NAME:
+        if database_name == SCHEMA_NAME:
             streams.append(stream)
 
     catalog.streams = streams
