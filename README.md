@@ -101,6 +101,7 @@ To emit a date as a date without a time component. This is helpful to avoid time
 {
   "use_date_datatype": true
 }
+```
 
 These are the same basic configuration properties used by the mssql command-line
 client (`mssql`).
