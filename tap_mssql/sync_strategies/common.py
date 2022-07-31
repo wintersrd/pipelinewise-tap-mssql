@@ -84,7 +84,8 @@ def generate_select_sql(catalog_entry, columns):
     escaped_columns = [escape(c) for c in columns]
 
     select_sql = "SELECT {} FROM {}.{}".format(",".join(escaped_columns), escaped_db, escaped_table)
-    
+    return select_sql
+
 def row_to_singer_record(catalog_entry, version, row, columns, time_extracted):
     row_to_persist = ()
     for idx, elem in enumerate(row):
