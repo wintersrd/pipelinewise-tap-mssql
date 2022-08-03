@@ -105,12 +105,22 @@ To emit a date as a date without a time component or time without an UTC offset.
 
 Optional:
 
-Set the version of TDS to use when communicating with MS SQL Server. This is used by pymssql with connecting and fetching data from SQL Server databases. See the [pymssql](https://pymssql.readthedocs.io/en/stable/index.html) documentation and [FreeTDS](https://www.freetds.org/) documentation for more details.
+Set the version of TDS to use when communicating with MS SQL Server (the default is 7.3). This is used by pymssql with connecting and fetching data from SQL Server databases. See the [pymssql](https://pymssql.readthedocs.io/en/stable/index.html) documentation and [FreeTDS](https://www.freetds.org/) documentation for more details.
 ```json
 {
   "tds_version": "7.3"
 }
 ```
+
+Optional:
+
+The characterset for the database / source system. The default is `utf8`, however older databases might use a charactersets like [cp1252](https://en.wikipedia.org/wiki/Windows-1252) for the encoding. If you have errors with a `UnicodeDecodeError: 'utf-8' codec can't decode byte ....` then a solution is examine the characterset of the source database / system and make an appropriate substitution for utf8 like cp1252. 
+```json
+{
+  "characterset": "utf8"
+}
+```
+
 These are the same basic configuration properties used by the mssql command-line
 client (`mssql`).
 
