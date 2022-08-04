@@ -186,7 +186,7 @@ def sync_query(cursor, catalog_entry, state, select_sql, columns, stream_version
             stream_metadata = md_map.get((), {})
             replication_method = stream_metadata.get("replication-method")
 
-            if replication_method in {"FULL_TABLE", "LOG_BASED"}:
+            if replication_method == "FULL_TABLE":
                 key_properties = get_key_properties(catalog_entry)
 
                 max_pk_values = singer.get_bookmark(
@@ -200,6 +200,22 @@ def sync_query(cursor, catalog_entry, state, select_sql, columns, stream_version
 
                     state = singer.write_bookmark(
                         state, catalog_entry.tap_stream_id, "last_pk_fetched", last_pk_fetched
+                    )
+
+            elif replication_method == "LOG_BASED":
+                key_properties = get_key_properties(catalog_entry)
+
+                max_lsn_values = singer.get_bookmark(
+                    state, catalog_entry.tap_stream_id, "max_lsn_values"
+                )
+
+                if max_lsn_values:
+                    last_lsn_fetched = {
+                        k: v for k, v in record_message.record.items() if k in key_properties
+                    }
+
+                    state = singer.write_bookmark(
+                        state, catalog_entry.tap_stream_id, "last_lsn_fetched", last_lsn_fetched
                     )
 
             elif replication_method == "INCREMENTAL":

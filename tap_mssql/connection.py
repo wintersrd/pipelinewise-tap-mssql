@@ -34,7 +34,7 @@ class MSSQLConnection(pymssql.Connection):
             "password": config.get("password"),
             "server": config["host"],
             "database": config["database"],
-            "charset": "utf8",
+            "charset": config.get("characterset", "utf8"),
             "port": config.get("port", "1433"),
             "tds_version": config.get("tds_version", "7.3"),
         }

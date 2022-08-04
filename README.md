@@ -105,10 +105,19 @@ To emit a date as a date without a time component or time without an UTC offset.
 
 Optional:
 
-Set the version of TDS to use when communicating with MS SQL Server. This is used by pymssql with connecting and fetching data from SQL Server databases. See the [pymssql](https://pymssql.readthedocs.io/en/stable/index.html) documentation and [FreeTDS](https://www.freetds.org/) documentation for more details.
+Set the version of TDS to use when communicating with MS SQL Server (the default is 7.3). This is used by pymssql with connecting and fetching data from SQL Server databases. See the [pymssql](https://pymssql.readthedocs.io/en/stable/index.html) documentation and [FreeTDS](https://www.freetds.org/) documentation for more details.
 ```json
 {
   "tds_version": "7.3"
+}
+```
+
+Optional:
+
+The characterset for the database / source system. The default is `utf8`, however older databases might use a charactersets like [cp1252](https://en.wikipedia.org/wiki/Windows-1252) for the encoding. If you have errors with a `UnicodeDecodeError: 'utf-8' codec can't decode byte ....` then a solution is examine the characterset of the source database / system and make an appropriate substitution for utf8 like cp1252.
+```json
+{
+  "characterset": "utf8"
 }
 ```
 
@@ -318,13 +327,28 @@ resultant stream of JSON data can be consumed by a Singer target.
 ## Replication methods and state file
 
 In the above example, we invoked `tap-mssql` without providing a _state_ file
-and without specifying a replication method. The two ways to replicate a given
-table are `FULL_TABLE` and `INCREMENTAL`.
+and without specifying a replication method. The three ways to replicate a given
+table are `FULL_TABLE`, `LOG_BASED`, and `INCREMENTAL`.
 
 ### Full Table
 
 Full-table replication extracts all data from the source table each time the tap
 is invoked.
+
+### Log Based
+
+Log_Based replication extracts change data from the MS SQL Server Change Data Capture (CDC) tables you have enrolled.
+
+This method allows you to replicate just the changes to a table e.g. the Inserts, Deletes, and Updates. For this method to work you
+must enrol the database in question and tables that you wish to replicate.
+
+See : https://docs.microsoft.com/en-us/sql/relational-databases/track-changes/enable-and-disable-change-data-capture-sql-server for
+more details.
+
+Please Note: CDC is different to Change Tracking which is a older approach for tracking change. Log Based only works with CDC, it does
+not work with Change Tracking!
+
+To find out more about setting up CDC, refer to this page [MSSQL CDC Setup](MS_CDC_SETUP.md)
 
 ### Incremental
 
@@ -452,3 +476,64 @@ This invocation extracts any data since (and including) the
 ---
 
 Based on Stitch documentation
+
+
+## Build Instructions
+
+This section dives into basic commands to build `tap-mssql` if an alteration is made to the code.
+
+### Setup Tools
+
+You may need a copy of setup tools or an up to date version of setup tools to build `tap-mssql`
+
+To do this follow these instructions.
+
+```bash
+  # Ensure you have first sourced the python virtual environment e.g.
+  source venv/bin/activate
+
+  python -m pip install --upgrade setuptools
+```
+
+### To build the tap
+
+Run the following command each time you need to rebuild the tap.
+
+```bash
+$ python setup.py install
+```
+
+### Debugging in Visual Studio Code
+
+To run the __init__.py python program in debug mode, you need to do the following two steps. Note: This was run within a Docker Container in Visual Studio Code.
+
+1. Create a .vscode/launch.json file. Note: The parameters config.json and properties.json should point to the files you have generated in previous steps above.
+   If you want to test state, include the state parameter as shown below and prepare an appropriate state file as per the instructions in an earlier section.
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Program",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceRoot}/tap_mssql/__init__.py",
+            "args": [
+                "-c", "config.json",
+                "--properties", "properties.json"
+                "--state", "state.json"
+            ]
+        }
+    ]
+}
+```
+2. Add a main entry to the __init__.py file to run interactively
+
+Add the following lines to the end of the __init__.py in the tap_mssql directory.
+
+```python
+
+if __name__ == '__main__':
+    main()  # pylint: disable=no-value-for-parameter
+```
