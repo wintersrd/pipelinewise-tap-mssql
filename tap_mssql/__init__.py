@@ -73,18 +73,26 @@ BYTES_FOR_INTEGER_TYPE = {
 
 FLOAT_TYPES = set(["float", "double", "real"])
 
-DECIMAL_TYPES = set(["decimal", "number", "money"])
+DECIMAL_TYPES = set(["decimal", "number", "money", "smallmoney", "numeric"])
 
-DATETIME_TYPES = set(["datetime", "timestamp", "date", "time", "smalldatetime"])
+DATETIME_TYPES = set(["datetime2","datetime", "timestamp", "smalldatetime"])
+
+DATE_TYPES = set(["date"])
+
+TIME_TYPES = set(["time"])
 
 VARIANT_TYPES = set(["json"])
 
+def default_date_format():
+    return False
 
-def schema_for_column(c):
+def schema_for_column(c, config):
     """Returns the Schema object for the given Column."""
     data_type = c.data_type.lower()
 
     inclusion = "available"
+
+    use_date_data_type_format = config.get("use_date_datatype") or default_date_format()
 
     if c.is_primary_key == 1:
         inclusion = "automatic"
@@ -119,6 +127,22 @@ def schema_for_column(c):
         result.type = ["null", "string"]
         result.format = "date-time"
 
+    elif data_type in DATE_TYPES:
+        if use_date_data_type_format:
+            result.type = ["null", "string"]
+            result.format = "date"
+        else:
+            result.type = ["null", "string"]
+            result.format = "date-time"
+
+    elif data_type in TIME_TYPES:
+        if use_date_data_type_format:
+            result.type = ["null", "string"]
+            result.format = "time"
+        else:
+            result.type = ["null", "string"]
+            result.format = "date-time"
+
     elif data_type in VARIANT_TYPES:
         result.type = ["null", "object"]
 
@@ -131,11 +155,11 @@ def schema_for_column(c):
     return result
 
 
-def create_column_metadata(cols):
+def create_column_metadata(cols, config):
     mdata = {}
     mdata = metadata.write(mdata, (), "selected-by-default", False)
     for c in cols:
-        schema = schema_for_column(c)
+        schema = schema_for_column(c, config)
         mdata = metadata.write(
             mdata,
             ("properties", c.column_name),
@@ -230,8 +254,8 @@ def discover_catalog(mssql_conn, config):
         for (k, cols) in itertools.groupby(columns, lambda c: (c.table_schema, c.table_name)):
             cols = list(cols)
             (table_schema, table_name) = k
-            schema = Schema(type="object", properties={c.column_name: schema_for_column(c) for c in cols})
-            md = create_column_metadata(cols)
+            schema = Schema(type="object", properties={c.column_name: schema_for_column(c, config) for c in cols})
+            md = create_column_metadata(cols, config)
             md_map = metadata.to_map(md)
 
             md_map = metadata.write(md_map, (), "database-name", table_schema)

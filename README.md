@@ -84,6 +84,34 @@ e.g.:
 }
 ```
 
+Optional:
+
+To filter the discovery to a particular schema within a database. This is useful if you have a large number of schemas and wish to speed up the discovery.
+
+```json
+{
+  "filter_dbs": "your database schema name",
+}
+```
+
+Optional:
+
+To emit a date as a date without a time component or time without an UTC offset. This is helpful to avoid time conversions or to just work with a date datetype in the target database. If this boolean config item is not set, the default behaviour is `false` i.e. emit date datatypes as a datetime. It is recommended to set this on if you have time datetypes and are having issues uploading into into a target database.
+```json
+{
+  "use_date_datatype": true
+}
+```
+
+Optional:
+
+Set the version of TDS to use when communicating with MS SQL Server. This is used by pymssql with connecting and fetching data from SQL Server databases. See the [pymssql](https://pymssql.readthedocs.io/en/stable/index.html) documentation and [FreeTDS](https://www.freetds.org/) documentation for more details.
+```json
+{
+  "tds_version": "7.3"
+}
+```
+
 These are the same basic configuration properties used by the mssql command-line
 client (`mssql`).
 
