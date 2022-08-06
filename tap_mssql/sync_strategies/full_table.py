@@ -1,21 +1,15 @@
 #!/usr/bin/env python3
 # pylint: disable=duplicate-code,too-many-locals,simplifiable-if-expression
 
-import copy
 import singer
-from singer import metadata
 
 import tap_mssql.sync_strategies.common as common
-
-from tap_mssql.connection import connect_with_backoff, MSSQLConnection
+from tap_mssql.connection import MSSQLConnection, connect_with_backoff
 
 LOGGER = singer.get_logger()
 
 
 def generate_bookmark_keys(catalog_entry):
-    md_map = metadata.to_map(catalog_entry.metadata)
-    stream_metadata = md_map.get((), {})
-    replication_method = stream_metadata.get("replication-method")
 
     base_bookmark_keys = {
         "last_pk_fetched",

@@ -1,11 +1,12 @@
 import copy
 import os
-import pymssql
 import unittest
+
+import pymssql
 import singer
 import singer.metadata
-import tap_mssql
 
+import tap_mssql
 from tap_mssql.connection import connect_with_backoff
 
 try:

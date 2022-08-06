@@ -1,10 +1,12 @@
-import unittest
-import pymssql
-import tap_mssql
 import copy
-import singer
 import os
+import unittest
+
+import pymssql
+import singer
 import singer.metadata
+
+import tap_mssql
 from tap_mssql.connection import connect_with_backoff
 
 try:
@@ -13,13 +15,14 @@ except ImportError:
     import utils as test_utils
 
 # import tap_mssql.sync_strategies.binlog as binlog
+from singer.schema import Schema
+
 import tap_mssql.sync_strategies.common as common
 
 # from pymssqlreplication import BinLogStreamReader
 # from pymssqlreplication.event import RotateEvent
 # from pymssqlreplication.row_event import DeleteRowsEvent, UpdateRowsEvent, WriteRowsEvent
 
-from singer.schema import Schema
 
 LOGGER = singer.get_logger()
 
@@ -94,7 +97,7 @@ class TestTypeMapping(unittest.TestCase):
         self.assertEqual(
             self.get_metadata_for_column("c_decimal_2_unsigned"),
             # {"selected-by-default": True, "sql-datatype": "decimal(5,2) unsigned"},
-            {"selected-by-default": True, "sql-datatype": "decimal"},            
+            {"selected-by-default": True, "sql-datatype": "decimal"},
         )
 
     def test_decimal_with_defined_scale_and_precision(self):
@@ -307,7 +310,7 @@ class TestSchemaMessages(unittest.TestCase):
             filter(lambda m: isinstance(m, singer.SchemaMessage), SINGER_MESSAGES)
         )[0]
         self.assertTrue(isinstance(schema_message, singer.SchemaMessage))
-        # tap-mysql selects new fields by default. If a field doesn't appear in the schema, then it should be
+        # tap-mssql selects new fields by default. If a field doesn't appear in the schema, then it should be
         # selected
         expectedKeys = ["id", "a", "b"]
 
@@ -443,9 +446,7 @@ class TestStreamVersionFullTable(unittest.TestCase):
         self.assertEqual(versions, [12345, 12345])
 
         self.assertFalse("version" in state["bookmarks"]["dbo-full_table"].keys())
-        self.assertTrue(
-            state["bookmarks"]["dbo-full_table"]["initial_full_table_complete"]
-        )
+        self.assertTrue(state["bookmarks"]["dbo-full_table"]["initial_full_table_complete"])
 
     def test_with_initial_full_table_complete_in_state(self):
         common.get_stream_version = lambda a, b: 12345
@@ -465,9 +466,7 @@ class TestStreamVersionFullTable(unittest.TestCase):
         common.get_stream_version = lambda a, b: 12345
 
         state = {
-            "bookmarks": {
-                "dbo-full_table": {"version": 1, "initial_full_table_complete": True}
-            }
+            "bookmarks": {"dbo-full_table": {"version": 1, "initial_full_table_complete": True}}
         }
 
         global SINGER_MESSAGES
@@ -480,9 +479,7 @@ class TestStreamVersionFullTable(unittest.TestCase):
         self.assertEqual(versions, [12345, 12345])
 
         self.assertFalse("version" in state["bookmarks"]["dbo-full_table"].keys())
-        self.assertTrue(
-            state["bookmarks"]["dbo-full_table"]["initial_full_table_complete"]
-        )
+        self.assertTrue(state["bookmarks"]["dbo-full_table"]["initial_full_table_complete"])
 
 
 class TestIncrementalReplication(unittest.TestCase):
@@ -604,9 +601,7 @@ class TestIncrementalReplication(unittest.TestCase):
         tap_mssql.do_sync(self.conn, {}, self.catalog, state)
 
         self.assertEqual(state["bookmarks"]["dbo-incremental"]["replication_key"], "val")
-        self.assertEqual(
-            state["bookmarks"]["dbo-incremental"]["replication_key_value"], 3
-        )
+        self.assertEqual(state["bookmarks"]["dbo-incremental"]["replication_key_value"], 3)
         self.assertEqual(state["bookmarks"]["dbo-incremental"]["version"], 1)
 
     def test_version_not_cleared_from_state_after_incremental_success(self):
@@ -955,7 +950,9 @@ class TestUnsupportedPK(unittest.TestCase):
                 cursor.execute(
                     "CREATE TABLE good_pk_tab (good_pk INT, age INT, PRIMARY KEY (good_pk))"
                 )
-                cursor.execute("INSERT INTO bad_pk_tab (bad_pk, age) VALUES (CONVERT(varbinary(3), N'a'), 100)")
+                cursor.execute(
+                    "INSERT INTO bad_pk_tab (bad_pk, age) VALUES (CONVERT(varbinary(3), N'a'), 100)"
+                )
                 cursor.execute("INSERT INTO good_pk_tab (good_pk, age) VALUES (1, 100)")
 
     def runTest(self):
