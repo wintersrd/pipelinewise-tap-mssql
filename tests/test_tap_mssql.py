@@ -588,7 +588,7 @@ class TestIncrementalReplication(unittest.TestCase):
         self.assertTrue(isinstance(versions[0], int))
         self.assertEqual(versions[0], versions[1])
         self.assertEqual(versions[1], 12345)
-        
+
 
 class TestViews(unittest.TestCase):
     def setUp(self):
