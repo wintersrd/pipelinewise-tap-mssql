@@ -34,6 +34,3 @@ jobs:
 
       - name: Tests
         run: poetry run tox -e py
-
-      - name: Code coverage reporting
-        run: poetry run python -m pytest --cov-report=xml:coverage-reports/coverage.xml --cov-report term-missing --cov=data_utils tests/
