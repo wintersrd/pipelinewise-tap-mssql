@@ -180,6 +180,7 @@ def discover_catalog(mssql_conn, config):
     else:
         table_schema_clause = """
         WHERE c.table_schema NOT IN (
+        'information_schema',
         'INFORMATION_SCHEMA',
         'performance_schema',
         'sys'
