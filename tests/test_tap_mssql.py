@@ -117,7 +117,7 @@ class TestTypeMapping(unittest.TestCase):
     def test_tinyint(self):
         self.assertEqual(
             self.schema.properties["c_tinyint"],
-            Schema(["null", "integer"], inclusion="available", minimum=-128, maximum=127),
+            Schema(["null", "integer"], inclusion="available", minimum=0, maximum=255),
         )
         # self.assertEqual(
         #     self.get_metadata_for_column("c_tinyint"),
