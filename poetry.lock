@@ -565,7 +565,7 @@ testing = ["flaky (>=3.4.0)", "freezegun (>=0.3.11)", "pathlib2 (>=2.3.3)", "psu
 
 [[package]]
 name = "tox-docker"
-version = "3.1.0"
+version = "4.0.0a2"
 description = "Launch a docker instance around test runs"
 category = "dev"
 optional = false
@@ -573,7 +573,8 @@ python-versions = "*"
 
 [package.dependencies]
 docker = ">=2.3.0,<6.0"
-tox = ">=3.0.0,<4.0"
+packaging = "*"
+tox = ">=3.0.0,<5.0"
 
 [[package]]
 name = "tox-poetry-installer"
@@ -665,7 +666,7 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "5c4dee1a442718b5ad45391ff9aa93ac8b6966a47c7d95b82fa3b55d33e09fc0"
+content-hash = "0294c40198a0e0e1450c4ee9a6b4e935cbab7a5b065a2c2a2984e7cf123083a1"
 
 [metadata.files]
 attrs = [
@@ -1055,8 +1056,7 @@ tox = [
     {file = "tox-3.26.0.tar.gz", hash = "sha256:44f3c347c68c2c68799d7d44f1808f9d396fc8a1a500cbc624253375c7ae107e"},
 ]
 tox-docker = [
-    {file = "tox-docker-3.1.0.tar.gz", hash = "sha256:e1d7d60254788a2c1956d6cdfbe2a6418ed0c18c7cf2486fd484079fc84d832c"},
-    {file = "tox_docker-3.1.0-py2.py3-none-any.whl", hash = "sha256:3080c436f7fdfb5a7446215aee620638489ccd7abf812d38b6fb860337efd6f2"},
+    {file = "tox-docker-4.0.0a2.tar.gz", hash = "sha256:721dcba7d52bb9207ea4866d897c91c4a69c713954a7632a25447e3996e3fb53"},
 ]
 tox-poetry-installer = [
     {file = "tox-poetry-installer-0.10.0.tar.gz", hash = "sha256:c15714973f5b0f7dbd07d6e7c4bc7d5bb8a878f71d5513d8d7f1a5e81ed1c521"},
