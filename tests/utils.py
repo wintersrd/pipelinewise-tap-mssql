@@ -14,7 +14,7 @@ SCHEMA_NAME = "dbo"
 def get_db_config(use_env_db_name=False, use_schema_name=False):
     config = {}
     config["user"] = "SA"
-    config["password"] = "testDatabase1^PW"
+    config["password"] = "testDatabase1"
     config["host"] = "localhost"
     config["database"] = DB_NAME
     config["charset"] = "utf8"
