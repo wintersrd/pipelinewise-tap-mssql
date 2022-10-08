@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 
 import backoff
-
 import pymssql
-
 import singer
-import ssl
 
 LOGGER = singer.get_logger()
 
@@ -13,7 +10,7 @@ LOGGER = singer.get_logger()
 @backoff.on_exception(backoff.expo, pymssql.Error, max_tries=5, factor=2)
 def connect_with_backoff(connection):
     warnings = []
-    with connection.cursor() as cur:
+    with connection.cursor():
         if warnings:
             LOGGER.info(
                 (

@@ -37,7 +37,9 @@ or
   pip install --upgrade pip
   pip install tap-mssql
 ```
+
 #### Additional OS X Requirements
+
 In the event you encounter install issues on OS X stating `fatal error: 'sqlfront.h' file not found`, install FreeTDS with SQL Server compatibility:
 
 1. Download the latest version from [FreeTDS](https://www.freetds.org/)
@@ -77,6 +79,7 @@ Create a config file containing the database connection credentials, e.g.:
 
 Windows Authentication is available! Don't provide a user or password and pymssql will use the user that is running the process on windows to login.
 e.g.:
+
 ```json
 {
   "host": "localhost",
@@ -90,13 +93,14 @@ To filter the discovery to a particular schema within a database. This is useful
 
 ```json
 {
-  "filter_dbs": "your database schema name",
+  "filter_dbs": "your database schema name"
 }
 ```
 
 Optional:
 
 To emit a date as a date without a time component or time without an UTC offset. This is helpful to avoid time conversions or to just work with a date datetype in the target database. If this boolean config item is not set, the default behaviour is `false` i.e. emit date datatypes as a datetime. It is recommended to set this on if you have time datetypes and are having issues uploading into into a target database.
+
 ```json
 {
   "use_date_datatype": true
@@ -106,6 +110,7 @@ To emit a date as a date without a time component or time without an UTC offset.
 Optional:
 
 Set the version of TDS to use when communicating with MS SQL Server (the default is 7.3). This is used by pymssql with connecting and fetching data from SQL Server databases. See the [pymssql](https://pymssql.readthedocs.io/en/stable/index.html) documentation and [FreeTDS](https://www.freetds.org/) documentation for more details.
+
 ```json
 {
   "tds_version": "7.3"
@@ -115,6 +120,7 @@ Set the version of TDS to use when communicating with MS SQL Server (the default
 Optional:
 
 The characterset for the database / source system. The default is `utf8`, however older databases might use a charactersets like [cp1252](https://en.wikipedia.org/wiki/Windows-1252) for the encoding. If you have errors with a `UnicodeDecodeError: 'utf-8' codec can't decode byte ....` then a solution is examine the characterset of the source database / system and make an appropriate substitution for utf8 like cp1252.
+
 ```json
 {
   "characterset": "utf8"
@@ -148,27 +154,18 @@ source table directly corresponds to a Singer stream.
         "properties": {
           "name": {
             "inclusion": "available",
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": ["null", "string"],
             "maxLength": 255
           },
           "id": {
             "inclusion": "automatic",
             "minimum": -2147483648,
             "maximum": 2147483647,
-            "type": [
-              "null",
-              "integer"
-            ]
+            "type": ["null", "integer"]
           },
           "likes_getting_petted": {
             "inclusion": "available",
-            "type": [
-              "null",
-              "boolean"
-            ]
+            "type": ["null", "boolean"]
           }
         }
       },
@@ -177,39 +174,28 @@ source table directly corresponds to a Singer stream.
           "breadcrumb": [],
           "metadata": {
             "row-count": 3,
-            "table-key-properties": [
-              "id"
-            ],
+            "table-key-properties": ["id"],
             "database-name": "example_db",
             "selected-by-default": false,
-            "is-view": false,
+            "is-view": false
           }
         },
         {
-          "breadcrumb": [
-            "properties",
-            "id"
-          ],
+          "breadcrumb": ["properties", "id"],
           "metadata": {
             "sql-datatype": "int(11)",
             "selected-by-default": true
           }
         },
         {
-          "breadcrumb": [
-            "properties",
-            "name"
-          ],
+          "breadcrumb": ["properties", "name"],
           "metadata": {
             "sql-datatype": "varchar(255)",
             "selected-by-default": true
           }
         },
         {
-          "breadcrumb": [
-            "properties",
-            "likes_getting_petted"
-          ],
+          "breadcrumb": ["properties", "likes_getting_petted"],
           "metadata": {
             "sql-datatype": "tinyint(1)",
             "selected-by-default": true
@@ -220,7 +206,6 @@ source table directly corresponds to a Singer stream.
     }
   ]
 }
-
 ```
 
 ### Field selection
@@ -247,9 +232,7 @@ information, see [Replication methods and state file](#replication-methods-and-s
     "breadcrumb": [],
     "metadata": {
       "row-count": 3,
-      "table-key-properties": [
-        "id"
-      ],
+      "table-key-properties": ["id"],
       "database-name": "example_db",
       "selected-by-default": false,
       "is-view": false,
@@ -258,10 +241,7 @@ information, see [Replication methods and state file](#replication-methods-and-s
     }
   },
   {
-    "breadcrumb": [
-      "properties",
-      "id"
-    ],
+    "breadcrumb": ["properties", "id"],
     "metadata": {
       "sql-datatype": "int(11)",
       "selected-by-default": true,
@@ -269,10 +249,7 @@ information, see [Replication methods and state file](#replication-methods-and-s
     }
   },
   {
-    "breadcrumb": [
-      "properties",
-      "name"
-    ],
+    "breadcrumb": ["properties", "name"],
     "metadata": {
       "sql-datatype": "varchar(255)",
       "selected-by-default": true,
@@ -280,10 +257,7 @@ information, see [Replication methods and state file](#replication-methods-and-s
     }
   },
   {
-    "breadcrumb": [
-      "properties",
-      "likes_getting_petted"
-    ],
+    "breadcrumb": ["properties", "likes_getting_petted"],
     "metadata": {
       "sql-datatype": "tinyint(1)",
       "selected-by-default": true,
@@ -477,7 +451,6 @@ This invocation extracts any data since (and including) the
 
 Based on Stitch documentation
 
-
 ## Build Instructions
 
 This section dives into basic commands to build `tap-mssql` if an alteration is made to the code.
@@ -505,7 +478,7 @@ $ python setup.py install
 
 ### Debugging in Visual Studio Code
 
-To run the __init__.py python program in debug mode, you need to do the following two steps. Note: This was run within a Docker Container in Visual Studio Code.
+To run the **init**.py python program in debug mode, you need to do the following two steps. Note: This was run within a Docker Container in Visual Studio Code.
 
 1. Create a .vscode/launch.json file. Note: The parameters config.json and properties.json should point to the files you have generated in previous steps above.
    If you want to test state, include the state parameter as shown below and prepare an appropriate state file as per the instructions in an earlier section.
@@ -528,9 +501,10 @@ To run the __init__.py python program in debug mode, you need to do the followin
     ]
 }
 ```
-2. Add a main entry to the __init__.py file to run interactively
 
-Add the following lines to the end of the __init__.py in the tap_mssql directory.
+2. Add a main entry to the **init**.py file to run interactively
+
+Add the following lines to the end of the **init**.py in the tap_mssql directory.
 
 ```python
 

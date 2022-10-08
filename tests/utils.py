@@ -1,31 +1,30 @@
 import os
+
 import pymssql
 import singer
+
 import tap_mssql
 import tap_mssql.sync_strategies.common as common
 from tap_mssql.connection import MSSQLConnection
 
-DB_NAME = "TAP_MSSQL_TEST"
+DB_NAME = "test_db"
 SCHEMA_NAME = "dbo"
 
 
 def get_db_config(use_env_db_name=False, use_schema_name=False):
     config = {}
-    config["user"] = os.environ.get("tap_mssql_USER")
-    config["password"] = os.environ.get("tap_mssql_PASSWORD")
-    config["host"] = os.environ.get("tap_mssql_HOST")
+    config["user"] = os.environ.get("tap_mssql_USER", "SA")
+    config["password"] = os.environ.get("tap_mssql_PASSWORD", "testDatabase1")
+    config["host"] = os.environ.get("tap_mssql_HOST", "localhost")
     config["database"] = DB_NAME
     config["charset"] = "utf8"
-    config["port"] = int(os.environ.get("tap_mssql_PORT"))
-    config["tds_version"] = os.environ.get("tap_mssql_TDS_VERSION", "8.0")
-    if not config["password"]:
-        del config["password"]
+    config["port"] = int(os.environ.get("tap_mssql_PORT", 1433))
+    config["tds_version"] = os.environ.get("tap_mssql_TDS_VERSION", "7.3")
 
     if use_env_db_name:
         config["database"] = os.environ.get("tap_mssql_DATABASE")
     elif use_schema_name:
         config["database"] = SCHEMA_NAME
-
     return config
 
 
@@ -46,11 +45,7 @@ def get_test_connection():
             cur.execute("CREATE DATABASE {}".format(DB_NAME))
     finally:
         con.close()
-
-    db_config["database"] = DB_NAME
-    db_config["server"] = db_config["host"]
-
-    mssql_conn = MSSQLConnection(db_config)
+    mssql_conn = MSSQLConnection(get_db_config())
     mssql_conn.autocommit_mode = True
 
     return mssql_conn
@@ -60,20 +55,14 @@ def discover_catalog(connection, config):
     catalog = {}
     config = get_db_config()
     catalog = tap_mssql.discover_catalog(connection, config)
-
-    # print(f"discovery_catalog = {catalog}")
     streams = []
 
     for stream in catalog.streams:
         database_name = common.get_database_name(stream)
-        print(f"database_name = {database_name}")
-        print(f"stream info = {stream.metadata}")
-
         if database_name == SCHEMA_NAME:
             streams.append(stream)
 
     catalog.streams = streams
-
     return catalog
 
 

@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "tap-mssql"
+version = "2.0.0"
+description = "A pipelinewise compatible tap for connecting Microsoft SQL Server"
+authors = ["Rob Winters <wintersrd@gmail.com>"]
+license = "GNU Affero"
+
+[tool.poetry.scripts]
+tap-mssql = 'tap_mssql.__init__:main'
+
+[tool.poetry.dependencies]
+python = "^3.7"
+attrs = ">=16.3.0"
+pendulum = ">=1.2.0"
+singer-python = "5.9.0"
+pymssql = ">=2.2.1"
+backoff = ">=1.8.0"
+
+[tool.poetry.dev-dependencies]
+docker = "^5.0.3"
+pytest = "^7.0.0"
+pytest-cov = "^2.12.1"
+mypy = "^0.971"
+pytest-mock = "^3.6.1"
+pytest-sugar = "^0.9.4"
+pytest-datafiles = "^2.0"
+tox-poetry-installer = "^0.10.0"
+tox-docker = "4.0.0a2"
+pre-commit = "^2.17.0"
+bumpversion = "^0.6.0"
+tox = "^3.26.0"
+
+[build-system]
+requires = ["poetry>=1.2.0"]
+build-backend = "poetry.masonry.api"

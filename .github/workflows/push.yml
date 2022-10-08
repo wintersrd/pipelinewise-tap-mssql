@@ -1,0 +1,36 @@
+---
+name: Build test
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Main
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v3
+
+      - name: Set up Python and test
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9.13
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Cache Poetry virtualenv
+        uses: actions/cache@v3
+        id: cache
+        with:
+          path: ~/.virtualenvs
+          key: poetry-$
+          restore-keys: |
+            poetry-$
+      - name: Install Python dependencies
+        run: poetry install
+        if: steps.cache.outputs.cache-hit != 'true'
+
+      - name: Tests
+        run: poetry run tox -e py

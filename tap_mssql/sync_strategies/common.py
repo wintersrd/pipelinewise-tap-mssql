@@ -3,13 +3,12 @@
 
 import copy
 import datetime
-import singer
 import time
 import uuid
 
+import singer
 import singer.metrics as metrics
-from singer import metadata
-from singer import utils
+from singer import metadata, utils
 
 LOGGER = singer.get_logger()
 
@@ -89,8 +88,10 @@ def generate_select_sql(catalog_entry, columns):
     select_sql = select_sql.replace("%", "%%")
     return select_sql
 
+
 def default_date_format():
     return False
+
 
 def row_to_singer_record(catalog_entry, version, row, columns, time_extracted, config):
     row_to_persist = ()
