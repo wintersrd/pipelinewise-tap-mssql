@@ -1,0 +1,23 @@
+---
+name: Publish to pypi
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  name: Main
+  runs-on: ubuntu-latest
+
+  steps:
+    - name: Checkout branch
+      uses: actions/checkout@v3
+
+    - name: Build and publish to pypi
+      uses: JRubics/poetry-publish@v1.13
+      with:
+        pypi_token: ${{ secrets.PYPI_TOKEN }}
+        python_version: 3.9.13
+        poetry_version: 1.2.0
+        ignore_dev_requirements: "yes"
