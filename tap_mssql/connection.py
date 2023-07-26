@@ -54,3 +54,11 @@ def make_connection_wrapper(config):
             connect_with_backoff(self)
 
     return ConnectionWrapper
+
+def ResultIterator(cursor, arraysize=1):
+    while True:
+        results = cursor.fetchmany(arraysize)
+        if not results:
+            break
+        for result in results:
+            yield result

@@ -1,4 +1,5 @@
 # pipelinewise-tap-mssql
+![singer_sqlserver_tap](https://user-images.githubusercontent.com/84364906/220873968-8b2e7357-8539-421f-888f-97fb3a17975e.png)
 
 [Singer](https://www.singer.io/) tap that extracts data from a [mssql](https://www.mssql.com/) database and produces JSON-formatted data following the [Singer spec](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md).
 
@@ -129,6 +130,30 @@ The characterset for the database / source system. The default is `utf8`, howeve
 
 These are the same basic configuration properties used by the mssql command-line
 client (`mssql`).
+
+Optional:
+
+To emit all numeric values as strings and treat floats as string data types for the target, set use_singer_decimal to true. The resulting SCHEMA message will contain an attribute in additionalProperties containing the scale and precision of the discovered property:
+
+```json
+"property": {
+            "inclusion": "available",
+            "format": "singer.decimal",
+            "type": [
+              "null",
+              "number"
+            ],
+            "additionalProperties": {
+              "scale_precision": "(12,0)"
+            }
+```
+
+Usage:
+```json
+{
+  "use_singer_decimal": true
+}
+```
 
 ### Discovery mode
 

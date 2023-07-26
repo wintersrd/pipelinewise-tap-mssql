@@ -10,6 +10,10 @@ import singer
 import singer.metrics as metrics
 from singer import metadata, utils
 
+from tap_mssql.connection import ResultIterator
+
+ARRAYSIZE = 1
+
 LOGGER = singer.get_logger()
 
 
@@ -98,6 +102,7 @@ def row_to_singer_record(catalog_entry, version, row, columns, time_extracted, c
     use_date_data_type_format = config.get("use_date_datatype") or default_date_format()
     for idx, elem in enumerate(row):
         property_type = catalog_entry.schema.properties[columns[idx]].type
+        property_format = catalog_entry.schema.properties[columns[idx]].format
         if isinstance(elem, datetime.datetime):
             row_to_persist += (elem.isoformat() + "+00:00",)
 
@@ -141,6 +146,11 @@ def row_to_singer_record(catalog_entry, version, row, columns, time_extracted, c
             row_to_persist += (boolean_representation,)
         elif isinstance(elem, uuid.UUID):
             row_to_persist += (str(elem),)
+        elif property_format == 'singer.decimal':
+            if elem is None:
+                row_to_persist += (elem,)
+            else:
+                row_to_persist += (str(elem),)
         else:
             row_to_persist += (elem,)
     rec = dict(zip(columns, row_to_persist))
@@ -167,16 +177,17 @@ def sync_query(cursor, catalog_entry, state, select_sql, columns, stream_version
     time_extracted = utils.now()
     cursor.execute(select_sql, params)
 
-    row = cursor.fetchone()
-    rows_saved = 0
+    LOGGER.info(f"{ARRAYSIZE=}")
 
     database_name = get_database_name(catalog_entry)
+
+    rows_saved = 0
 
     with metrics.record_counter(None) as counter:
         counter.tags["database"] = database_name
         counter.tags["table"] = catalog_entry.table
-
-        while row:
+        
+        for row in ResultIterator(cursor, ARRAYSIZE):
             counter.increment()
             rows_saved += 1
             record_message = row_to_singer_record(
@@ -233,7 +244,5 @@ def sync_query(cursor, catalog_entry, state, select_sql, columns, stream_version
                     )
             if rows_saved % 1000 == 0:
                 singer.write_message(singer.StateMessage(value=copy.deepcopy(state)))
-
-            row = cursor.fetchone()
 
     singer.write_message(singer.StateMessage(value=copy.deepcopy(state)))

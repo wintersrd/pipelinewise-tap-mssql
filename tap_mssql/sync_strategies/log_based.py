@@ -220,7 +220,7 @@ def sync_historic_table(mssql_conn, config, catalog_entry, state, columns, strea
                                 , null _sdc_lsn_deleted_at
                                 , '00000000000000000000' _sdc_lsn_value
                                 , '00000000000000000000' _sdc_lsn_seq_value
-                                , 1 as _sdc_lsn_operation
+                                , 2 as _sdc_lsn_operation
                             FROM {}.{}
                             ;""".format(
                 ",".join(escaped_columns), schema_name, table_name
@@ -317,6 +317,20 @@ def sync_table(mssql_conn, config, catalog_entry, state, columns, stream_version
                         lsn_from,
                         lsn_to,
                     )
+                    if lsn_to == state_last_lsn:
+                        LOGGER.info(
+                            (
+                                "The last lsn processed as per the state file is equal to the max"
+                                " lsn available - no changes expected - state lsn will not be incremented"
+                            ),
+                        )
+                        from_lsn_expression = "{}".format(py_bin_to_mssql(state_last_lsn))
+                    else:
+                        from_lsn_expression = (
+                            (
+                                "sys.fn_cdc_increment_lsn({})"
+                            ).format(py_bin_to_mssql(state_last_lsn))
+                        )
                 else:
                     raise Exception(
                         (
@@ -327,7 +341,7 @@ def sync_table(mssql_conn, config, catalog_entry, state, columns, stream_version
 
                 select_sql = """DECLARE @from_lsn binary (10), @to_lsn binary (10)
 
-                                SET @from_lsn = sys.fn_cdc_increment_lsn({})
+                                SET @from_lsn = {}
                                 SET @to_lsn = {}
 
                                 SELECT {}
@@ -347,7 +361,7 @@ def sync_table(mssql_conn, config, catalog_entry, state, columns, stream_version
                                 FROM cdc.fn_cdc_get_all_changes_{}(@from_lsn, @to_lsn, 'all')
                                 ORDER BY __$start_lsn, __$seqval, __$operation
                                 ;""".format(
-                    py_bin_to_mssql(state_last_lsn),
+                    from_lsn_expression,
                     py_bin_to_mssql(lsn_to),
                     ",".join(escaped_columns),
                     schema_table,
