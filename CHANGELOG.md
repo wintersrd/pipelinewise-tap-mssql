@@ -25,7 +25,7 @@ this lsn as it causes errors in the `fn_cdc_get_all_changes` function.
 * Fixing bug. pymssql 2.2.8 does not work. Excluding this version from pyproject.toml.
 * Feature. Adding a logo to the tap.
 * Resolving PR: https://github.com/wintersrd/pipelinewise-tap-mssql/pull/36
-* Resolving PR: https://github.com/wintersrd/pipelinewise-tap-mssql/pull/16/files
+* Resolving PR: https://github.com/wintersrd/pipelinewise-tap-mssql/pull/16
 
 # tap-mssql 2.0.0 2022-08-15
 
