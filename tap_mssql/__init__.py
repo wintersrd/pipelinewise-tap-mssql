@@ -673,7 +673,7 @@ def sync_non_cdc_streams(mssql_conn, non_cdc_catalog, config, state):
                 do_sync_historical_log(mssql_conn, config, catalog_entry, state, columns)
             else:
                 raise Exception(
-                    "only INCREMENTAL, LOG_BASED and FULL TABLE replication methods are supported"
+                    "only INCREMENTAL, LOG_BASED and FULL_TABLE replication methods are supported"
                 )
 
     state = singer.set_currently_syncing(state, None)

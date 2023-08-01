@@ -78,6 +78,12 @@ Create a config file containing the database connection credentials, e.g.:
 }
 ```
 
+Recommended optional settings
+
+* `"use_date_datatype": true`   - This will emit true timestamps and handle the time datatype.
+* `"use_singer_decimal": true`        - This will help avoid numeric rounding issues emitting as a string with a format of singer.decimal.
+* `"cursor_array_size": 10000` - This will help speed up extracts over a WAN or low latency network. The default is 1.
+
 Windows Authentication is available! Don't provide a user or password and pymssql will use the user that is running the process on windows to login.
 e.g.:
 
@@ -152,6 +158,16 @@ Usage:
 ```json
 {
   "use_singer_decimal": true
+}
+```
+
+Optional:
+
+A numeric setting adjusting the internal buffersize. The common query tuning scenario is for SELECT statements that return a large number of rows over a slow network. Increasing arraysize can improve performance by reducing the number of round-trips to the database. However increasing this value increases the amount of memory required.
+
+```json
+{
+  "cursor_array_size": 10000,
 }
 ```
 

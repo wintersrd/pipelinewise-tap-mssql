@@ -88,8 +88,6 @@ def generate_select_sql(catalog_entry, columns):
 
     select_sql = "SELECT {} FROM {}.{}".format(",".join(escaped_columns), escaped_db, escaped_table)
 
-    # escape percent signs
-    select_sql = select_sql.replace("%", "%%")
     return select_sql
 
 
