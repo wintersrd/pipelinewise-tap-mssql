@@ -904,16 +904,17 @@ testing = ["flaky (>=3.4.0)", "freezegun (>=0.3.11)", "pathlib2 (>=2.3.3)", "psu
 
 [[package]]
 name = "tox-docker"
-version = "4.0.0a2"
+version = "4.1.0"
 description = "Launch a docker instance around test runs"
 optional = false
 python-versions = "*"
 files = [
-    {file = "tox-docker-4.0.0a2.tar.gz", hash = "sha256:721dcba7d52bb9207ea4866d897c91c4a69c713954a7632a25447e3996e3fb53"},
+    {file = "tox-docker-4.1.0.tar.gz", hash = "sha256:0317e692dc80f2197eaf9c905dcb8d1d1f9d5bf2686ecfd83c22a1da9d23fb24"},
+    {file = "tox_docker-4.1.0-py2.py3-none-any.whl", hash = "sha256:444c72192a2443d2b4db5766545d4413ea683cc488523d770e2e216f15fa3086"},
 ]
 
 [package.dependencies]
-docker = ">=2.3.0,<6.0"
+docker = ">=4.0,<7.0"
 packaging = "*"
 tox = ">=3.0.0,<5.0"
 
@@ -1050,4 +1051,4 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7"
-content-hash = "8c5a7e700b9d06782e7845ae584681e6e3d65e6c92a1389db460dfa2cfb47e0c"
+content-hash = "92cbe8f441b7e88d49cd44c680b3a1f0408c4384097197225af80348d40fa79e"
