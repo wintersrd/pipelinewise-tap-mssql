@@ -919,13 +919,13 @@ tox = ">=3.0.0,<5.0"
 
 [[package]]
 name = "tox-poetry-installer"
-version = "0.10.0"
+version = "0.10.3"
 description = "A plugin for Tox that lets you install test environment dependencies from the Poetry lockfile"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "tox-poetry-installer-0.10.0.tar.gz", hash = "sha256:c15714973f5b0f7dbd07d6e7c4bc7d5bb8a878f71d5513d8d7f1a5e81ed1c521"},
-    {file = "tox_poetry_installer-0.10.0-py3-none-any.whl", hash = "sha256:3baff43f7926c09d66027b7a837719a2b373d7f284898b2cd9dd2f0caad49bb9"},
+    {file = "tox_poetry_installer-0.10.3-py3-none-any.whl", hash = "sha256:8580caf05f1ac83a7a938e449cfcb220cadaf6b087e9581ae837d782804ad4bc"},
+    {file = "tox_poetry_installer-0.10.3.tar.gz", hash = "sha256:58af36082293b87e3488184f46ccf6f288c52c90e802066f53d3209c0f1c6226"},
 ]
 
 [package.dependencies]
@@ -933,7 +933,7 @@ poetry-core = ">=1.1.0,<2.0.0"
 tox = ">=3.8.0,<4.0.0"
 
 [package.extras]
-poetry = ["cleo (>=1.0.0a5,<2.0.0)", "poetry (>=1.2.0,<2.0.0)"]
+poetry = ["cleo (>=1.0,<3.0)", "poetry (>=1.2.0,<1.5.0)"]
 
 [[package]]
 name = "typed-ast"
@@ -1050,4 +1050,4 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7"
-content-hash = "0294c40198a0e0e1450c4ee9a6b4e935cbab7a5b065a2c2a2984e7cf123083a1"
+content-hash = "8c5a7e700b9d06782e7845ae584681e6e3d65e6c92a1389db460dfa2cfb47e0c"
