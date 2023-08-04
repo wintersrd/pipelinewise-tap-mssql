@@ -27,6 +27,12 @@ full image of the record is extremely useful.
 
 This implication of MSSQL log_based replication approach uses Change Data Capture only. It does not support Change Tracking due to the obvious limitations and performance overheads.
 
+## Primary Key Update
+
+A primary key update is when the value of the primary key is altered. In many application the primary key for a table is an allocated number based on a sequence, so it is not possible to update. In some database schema's it is techniquely possible to update a primary key e.g. change an Employee ID from `joesmith` to `joesmith1`. This is generally frowned upon as it can have undesirable consequences.
+
+It is important to note because of undesirables consequences, when CDC is enabled on a table you cannot update the primary key. This is noted in the Microsoft documentation here https://learn.microsoft.com/en-us/sql/relational-databases/track-changes/enable-and-disable-change-data-capture-sql-server?view=sql-server-ver16 . If the primary key needs to be updated it the Change Data Capture must be disabled on the table.
+
 ## Setup Example
 
 The following example works with the MSSQL AdventureWorks2016 database. If you would like to try the example, please download and install the AdventureWorks database from here.
@@ -151,6 +157,13 @@ EXEC sys.sp_cdc_enable_table
 @filegroup_name = N'CDC_FILEGROUP',
 @supports_net_changes = 1
 ;
+
+-- =========
+-- Grant permissions for each base database table (if required)
+-- =========
+-- GRANT SELECT on each source table to enable CDC table-valued function calls
+GRANT SELECT ON [<sourceSchemaName>].[<sourceTableName>] TO CDC_Role;
+
 
 -- =========
 -- Fixing the logging if it was not working
@@ -456,5 +469,128 @@ exec msdb.dbo.rds_cdc_disable_db [<database_name>];
 --Remove Logins, db_users, roles created above.
 
 --Romove FILEGROUP 'CDC_FILEGROUP'
+
+```
+
+
+## Code to manage structural changes (DDL) to tables being captured.
+
+If a new columns is added to a base table which has been enrolled for CDC, it will not be automatically propagated to the capture table. If a table is being altered, the CDC capture routines need to be re-issued to ensure all columns are being captured.
+
+This script can be used to re-enrol a table for CDC, ideally immediately after any ALTER TABLE statements have been issued.
+
+This makes use of the fact that a table can have two capture instances enabled on it simultaneously. In this description, the current capture instance will be called `A` and the temporary one called `B`
+
+1. Enable a new capture instance on the table `B`
+2. Get a list of columns that are common to both capture instances `A` and `B`
+3. Insert the contents of the change table for `A` into `B`
+4. Set the `start_lsn` for capture instance `B` to the `start_lsn` for capture instance `A` in `cdc.change_tables` (alternatively this value could be stored in a variable)
+5. Disable capture instance `A`
+6. Re-enable capture instance `A` - this resets the `start_lsn` in `cdc.change_tables`
+7. Insert the contents of the change table for `B` into `A`
+8. Set the `start_lsn` for capture instance `A` to the `start_lsn` for capture instance `B` in `cdc.change_tables`
+9. Disable capture instance `B`
+
+```sql
+
+/* Re Enrolment of a table in CDC (ideally immediately) after an ALTER TABLE */
+/* operation has occurred on the base table */
+DECLARE @source_schema varchar(max) = 'dbo'
+DECLARE @source_name varchar(max) = 'MyBaseTableName'
+DECLARE @cdc_schema varchar(max) = 'cdc'
+DECLARE @column_list varchar(max)
+DECLARE @sql varchar(max)
+DECLARE @capture_instance varchar(max)
+SET @capture_instance = @source_schema+'_'+@source_name
+DECLARE @ct_table varchar(max)
+SET @ct_table = @capture_instance+'_CT'
+DECLARE @capture_instance_temp varchar(max)
+SET @capture_instance_temp = @capture_instance+'_temp'
+DECLARE @ct_table_temp varchar(max)
+SET @ct_table_temp = @capture_instance_temp+'_CT'
+
+--Test alterations on the base table here
+--SET @sql = 'ALTER TABLE '+@source_schema+'.'+@source_name+' DROP COLUMN TestNewColumn'
+--EXEC(@sql)
+
+/* Enrol the table with a temporary capture instance */
+EXEC [sys].[sp_cdc_enable_table]
+  @source_schema = @source_schema,
+  @source_name   = @source_name,
+  @role_name     = N'CDCDWHrole',
+  @supports_net_changes = 1,
+  @filegroup_name = N'CDC_FILEGROUP',
+  @capture_instance = @capture_instance_temp
+
+/* Get a list of the column names from both original and temp CDC CT tables */
+/* IMPORTANT: For any removed columns that had values changed before the ALTER TABLE */
+/* that were not previously synced, these values will be lost during this reenrolment process! */
+SELECT @column_list = STUFF(( SELECT  ',' + column_name
+      FROM (SELECT ct.column_name
+                FROM
+                  INFORMATION_SCHEMA.COLUMNS ct
+                inner join
+                  INFORMATION_SCHEMA.COLUMNS ctt
+                  on ct.column_name = ctt.column_name
+                where ct.table_name = @ct_table and ct.table_schema = @cdc_schema
+                and ctt.table_name = @ct_table_temp and ctt.table_schema = @cdc_schema
+              ) x
+    FOR
+      XML PATH('')
+    ), 1, 1, '')
+
+/* At this point the min LSN for the temp table is too high for Meltano to get changes */
+/* and too high for the fn_cdc_get_all_changes to work too */
+SET @sql = 'INSERT INTO '+@cdc_schema+'.'+@ct_table_temp+
+'('+@column_list+') SELECT '+@column_list+
+' FROM '+@cdc_schema+'.'+@ct_table
+
+exec(@sql)
+
+/* Artificially tell the temp table that its min LSN is the same as the base CT table */
+SET @sql = 'UPDATE cdc.change_tables
+SET start_lsn = (
+select start_lsn from cdc.change_tables
+where capture_instance = '''+@capture_instance+'''
+)
+where capture_instance = '''+@capture_instance+'_temp'''
+
+exec(@sql)
+
+/* Re-enrol the table */
+EXEC [sys].[sp_cdc_disable_table]
+      @source_schema = N'dbo',
+      @capture_instance = @capture_instance,
+      @source_name = @source_name
+
+EXEC [sys].[sp_cdc_enable_table]
+  @source_schema = @source_schema,
+  @source_name   = @source_name,
+  @role_name     = N'CDCDWHrole',
+  @supports_net_changes = 1,
+  @filegroup_name = N'CDC_FILEGROUP'
+
+SET @sql = 'INSERT INTO '+@cdc_schema+'.'+@ct_table+
+'('+@column_list+') SELECT '+@column_list+
+' FROM '+@cdc_schema+'.'+@ct_table_temp
+
+exec(@sql)
+
+/* Artificially tell the original CT table that its min LSN is the same as the temp CT table */
+/* effectively restoring the start_lsn to before the change */
+SET @sql = 'UPDATE cdc.change_tables
+SET start_lsn = (
+select start_lsn from cdc.change_tables
+where capture_instance = '''+@capture_instance+'_temp''
+)
+where capture_instance = '''+@capture_instance+''''
+
+exec(@sql)
+
+/* Drop the temporary capture instance */
+EXEC [sys].[sp_cdc_disable_table]
+  @source_schema = @source_schema,
+  @source_name   = @source_name,
+  @capture_instance = @capture_instance_temp
 
 ```

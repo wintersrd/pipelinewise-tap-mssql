@@ -16,7 +16,9 @@ import tap_mssql.sync_strategies.common as common
 import tap_mssql.sync_strategies.full_table as full_table
 import tap_mssql.sync_strategies.incremental as incremental
 import tap_mssql.sync_strategies.log_based as log_based
-from tap_mssql.connection import MSSQLConnection, connect_with_backoff
+from tap_mssql.connection import MSSQLConnection, connect_with_backoff, ResultIterator
+
+ARRAYSIZE = 1
 
 Column = collections.namedtuple(
     "Column",
@@ -76,6 +78,12 @@ VARIANT_TYPES = set(["json"])
 def default_date_format():
     return False
 
+def default_singer_decimal():
+    """
+    singer_decimal can be enabled in the the config, which will use singer.decimal as a format and string as the type
+    use this for large/precise numbers
+    """
+    return False
 
 def schema_for_column(c, config):
     """Returns the Schema object for the given Column."""
@@ -83,7 +91,8 @@ def schema_for_column(c, config):
 
     inclusion = "available"
 
-    use_date_data_type_format = config.get("use_date_datatype") or default_date_format()
+    use_date_data_type_format = config.get('use_date_datatype') or default_date_format()
+    use_singer_decimal = config.get('use_singer_decimal') or default_singer_decimal()
 
     if c.is_primary_key == 1:
         inclusion = "automatic"
@@ -100,13 +109,21 @@ def schema_for_column(c, config):
         result.maximum = 2 ** (bits - 1) - 1
 
     elif data_type in FLOAT_TYPES:
-        result.type = ["null", "number"]
-        result.multipleOf = 10 ** (0 - (c.numeric_scale or 17))
+        if use_singer_decimal:
+            result.type = ["null","string"]
+            result.format = "singer.decimal"
+        else:
+            result.type = ["null", "number"]
+            result.multipleOf = 10 ** (0 - (c.numeric_scale or 17))
 
     elif data_type in DECIMAL_TYPES:
-        result.type = ["null", "number"]
-        result.multipleOf = 10 ** (0 - c.numeric_scale)
-        return result
+        if use_singer_decimal:
+            result.type = ["null","number"]
+            result.format = "singer.decimal"
+            result.additionalProperties = {"scale_precision": f"({c.character_maximum_length},{c.numeric_scale})"}
+        else:
+            result.type = ["null", "number"]
+            result.multipleOf = 10 ** (0 - c.numeric_scale)
 
     elif data_type in STRING_TYPES:
         result.type = ["null", "string"]
@@ -236,16 +253,17 @@ def discover_catalog(mssql_conn, config):
                     and cc.column_name = c.column_name
 
                 {}
-                ORDER BY c.table_schema, c.table_name
+                ORDER BY c.table_schema, c.table_name, c.ORDINAL_POSITION
         """.format(
                 table_schema_clause
             )
         )
         columns = []
-        rec = cur.fetchone()
-        while rec is not None:
+        LOGGER.info(f"{ARRAYSIZE=}")
+
+        for rec in ResultIterator(cur, ARRAYSIZE):
             columns.append(Column(*rec))
-            rec = cur.fetchone()
+
         LOGGER.info("Columns Fetched")
         entries = []
         for (k, cols) in itertools.groupby(columns, lambda c: (c.table_schema, c.table_name)):
@@ -437,10 +455,9 @@ def get_non_cdc_streams(mssql_conn, catalog, config, state):
 
     for stream in selected_streams:
         stream_metadata = metadata.to_map(stream.metadata)
-        # if stream_metadata.table in ["aagaggpercols", "aagaggdef"]:
+
         for k, v in stream_metadata.get((), {}).items():
             LOGGER.info(f"{k}: {v}")
-            # LOGGER.info(stream_metadata.get((), {}).get("table-key-properties"))
         replication_method = stream_metadata.get((), {}).get("replication-method")
         stream_state = state.get("bookmarks", {}).get(stream.tap_stream_id)
 
@@ -484,7 +501,7 @@ def get_non_cdc_streams(mssql_conn, catalog, config, state):
             filter(
                 lambda s: s.tap_stream_id == currently_syncing
                 and is_valid_currently_syncing_stream(s, state),
-                streams_with_state,
+                ordered_streams,
             )
         )
 
@@ -632,9 +649,8 @@ def sync_non_cdc_streams(mssql_conn, non_cdc_catalog, config, state):
                 f"No replication key for {catalog_entry.table}, using full table replication"
             )
             replication_method = "FULL_TABLE"
-        if replication_method == "INCREMENTAL" and not primary_keys:
-            LOGGER.info(f"No primary key for {catalog_entry.table}, using full table replication")
-            replication_method = "FULL_TABLE"
+        # Check for INCREMENTAL load without primary keys removed
+        # INCREMENTAL loads can be performed without primary keys as long as there is a replication key
         if replication_method == "LOG_BASED" and not start_lsn:
             LOGGER.info(f"No initial load for {catalog_entry.table}, using full table replication")
         else:
@@ -729,9 +745,14 @@ def log_server_params(mssql_conn):
 
 
 def main_impl():
+
+    global ARRAYSIZE
     args = utils.parse_args(REQUIRED_CONFIG_KEYS)
     mssql_conn = MSSQLConnection(args.config)
     log_server_params(mssql_conn)
+
+    ARRAYSIZE = args.config.get('cursor_array_size',1)
+    common.ARRAYSIZE = ARRAYSIZE
 
     if args.discover:
         do_discover(mssql_conn, args.config)
