@@ -193,10 +193,10 @@ def discover_catalog(mssql_conn, config):
     if filter_dbs_config:
         filter_dbs_clause = ",".join(["'{}'".format(db) for db in filter_dbs_config.split(",")])
 
-        table_schema_clause = "WHERE c.table_schema IN ({})".format(filter_dbs_clause)
+        table_schema_clause = "WHERE c.TABLE_SCHEMA IN ({})".format(filter_dbs_clause)
     else:
         table_schema_clause = """
-        WHERE c.table_schema NOT IN (
+        WHERE c.TABLE_SCHEMA NOT IN (
         'information_schema',
         'INFORMATION_SCHEMA',
         'performance_schema',
@@ -207,10 +207,10 @@ def discover_catalog(mssql_conn, config):
         cur = open_conn.cursor()
         LOGGER.info("Fetching tables")
         cur.execute(
-            """SELECT table_schema,
-                table_name,
-                table_type
-            FROM INFORMATION_SCHEMA.tables c
+            """SELECT TABLE_SCHEMA,
+                TABLE_NAME,
+                TABLE_TYPE
+            FROM INFORMATION_SCHEMA.TABLES c
             {}
         """.format(
                 table_schema_clause
@@ -226,34 +226,34 @@ def discover_catalog(mssql_conn, config):
         LOGGER.info("Tables fetched, fetching columns")
         cur.execute(
             """with constraint_columns as (
-                select c.table_schema
-                , c.table_name
-                , c.column_name
+                select c.TABLE_SCHEMA
+                , c.TABLE_NAME
+                , c.COLUMN_NAME
 
-                from INFORMATION_SCHEMA.constraint_column_usage c
+                from INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE c
 
-                join INFORMATION_SCHEMA.table_constraints tc
-                        on tc.table_schema = c.table_schema
-                        and tc.table_name = c.table_name
-                        and tc.constraint_name = c.constraint_name
-                        and tc.constraint_type in ('PRIMARY KEY', 'UNIQUE'))
-                SELECT c.table_schema,
-                    c.table_name,
-                    c.column_name,
-                    data_type,
-                    character_maximum_length,
-                    numeric_precision,
-                    numeric_scale,
-                    case when cc.column_name is null then 0 else 1 end
-                FROM INFORMATION_SCHEMA.columns c
+                join INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
+                        on tc.TABLE_SCHEMA = c.TABLE_SCHEMA
+                        and tc.TABLE_NAME = c.TABLE_NAME
+                        and tc.CONSTRAINT_NAME = c.CONSTRAINT_NAME
+                        and tc.CONSTRAINT_TYPE in ('PRIMARY KEY', 'UNIQUE'))
+                SELECT c.TABLE_SCHEMA,
+                    c.TABLE_NAME,
+                    c.COLUMN_NAME,
+                    DATA_TYPE,
+                    CHARACTER_MAXIMUM_LENGTH,
+                    NUMERIC_PRECISION,
+                    NUMERIC_SCALE,
+                    case when cc.COLUMN_NAME is null then 0 else 1 end
+                FROM INFORMATION_SCHEMA.COLUMNS c
 
                 left join constraint_columns cc
-                    on cc.table_name = c.table_name
-                    and cc.table_schema = c.table_schema
-                    and cc.column_name = c.column_name
+                    on cc.TABLE_NAME = c.TABLE_NAME
+                    and cc.TABLE_SCHEMA = c.TABLE_SCHEMA
+                    and cc.COLUMN_NAME = c.COLUMN_NAME
 
                 {}
-                ORDER BY c.table_schema, c.table_name, c.ORDINAL_POSITION
+                ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.ORDINAL_POSITION
         """.format(
                 table_schema_clause
             )
