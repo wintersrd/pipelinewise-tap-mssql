@@ -496,25 +496,15 @@ Based on Stitch documentation
 
 This section dives into basic commands to build `tap-mssql` if an alteration is made to the code.
 
-### Setup Tools
-
-You may need a copy of setup tools or an up to date version of setup tools to build `tap-mssql`
-
-To do this follow these instructions.
-
-```bash
-  # Ensure you have first sourced the python virtual environment e.g.
-  source venv/bin/activate
-
-  python -m pip install --upgrade setuptools
-```
-
 ### To build the tap
 
 Run the following command each time you need to rebuild the tap.
 
 ```bash
-$ python setup.py install
+  python3 -m venv venv
+  . venv/bin/activate
+  pip install --upgrade pip
+  pip install .
 ```
 
 ### Debugging in Visual Studio Code

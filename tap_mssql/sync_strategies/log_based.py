@@ -194,7 +194,7 @@ def sync_historic_table(mssql_conn, config, catalog_entry, state, columns, strea
     with connect_with_backoff(mssql_conn) as open_conn:
         with open_conn.cursor() as cur:
 
-            escaped_columns = [common.escape(c) for c in columns]
+            escaped_columns = map(lambda c: common.prepare_columns_sql(catalog_entry, c), columns)
             table_name = catalog_entry.table
             schema_name = common.get_database_name(catalog_entry)
 
@@ -288,7 +288,7 @@ def sync_table(mssql_conn, config, catalog_entry, state, columns, stream_version
 
             state_last_lsn = singer.get_bookmark(state, catalog_entry.tap_stream_id, "lsn")
 
-            escaped_columns = [common.escape(c) for c in columns]
+            escaped_columns = map(lambda c: common.prepare_columns_sql(catalog_entry, c), columns)
             table_name = catalog_entry.table
             schema_name = common.get_database_name(catalog_entry)
             schema_table = schema_name + "_" + table_name
