@@ -1,3 +1,12 @@
+# tap-mssql 2.2.0 2023-08-23
+
+This feature increases support for SQL Datatypes.
+
+* Adds support for datetimeoffset - https://github.com/wintersrd/pipelinewise-tap-mssql/issues/50
+* Resolves issue with datetime2 rounding with high precision timestamps https://github.com/wintersrd/pipelinewise-tap-mssql/issues/51
+* Resolves the max and min range for tinyints. The current min and max are correct for MariaDB and MySQL only. MSSQL Server only supports
+positive integers (unsigned tinyint). https://github.com/wintersrd/pipelinewise-tap-mssql/issues/2
+
 # tap-mssql 2.1.0 2023-08-01
 
 This is a number of new enhancements to extend capability and resolving a few bugs.

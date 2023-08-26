@@ -492,29 +492,40 @@ This invocation extracts any data since (and including) the
 
 Based on Stitch documentation
 
+## Data Types
+
+The json output by this tap should be JSON schema compliant and also conform to the Singer Framework standard.
+
+Noted: Below is some examples of the data transformation to present data in a standard manner for Singer Targets.
+
+A special note for `datetime2` and `datetimeoffsets` MS SQL Server datatypes.
+
+For `datetime2`, it as a naïve datetime timestamp with no concept of an offset, `datetime2` supports nanoseconds with up to seven decimal places. With `datetimeoffset` datatypes, the data is normalized to UTC i.e. taking the offset as it is in MSSQL Server and converting it to a UTC so it is agnostic to the target platform - anything with a datetimeoffset can be cast into local time in the target.
+
+To work-around issues with the PYMSSQL driver, the conversion takes place on the SQL Server source to ensure there is no loss of precision leading to errors as a result of rounding.
+
+|SQL DataType|Example Value|Min|Max| JSON Format| JSON Type |Example Result|
+|-----------------|------------------------|-------------------------|-----------------------------|------------------------|------------------------|-----------------------|
+| tinyint  | 254  | 0  | 255   | | integer   | 254  |
+| smallint  | -32768  | -32768  | 32767   | | integer   | -32768  |
+| int  | -2147483648  | -2147483648  | 2147483647   | | integer   | -2147483648  |
+| bigint  | -9223372036854775808  | -9223372036854775808  | 9223372036854775807   | | integer   | -9223372036854775808  |
+| datetime2 | 9999-12-31 23:59:59.9999999 | | | date-time |  string | 9999-12-31 23:59:59.9999999 |
+| datetimeoffset | 2023-08-22 08:24:32.1277000 +10:00 | | | date-time |  string | 2023-08-21T22:24:32.1277000Z |
+
 ## Build Instructions
 
 This section dives into basic commands to build `tap-mssql` if an alteration is made to the code.
-
-### Setup Tools
-
-You may need a copy of setup tools or an up to date version of setup tools to build `tap-mssql`
-
-To do this follow these instructions.
-
-```bash
-  # Ensure you have first sourced the python virtual environment e.g.
-  source venv/bin/activate
-
-  python -m pip install --upgrade setuptools
-```
 
 ### To build the tap
 
 Run the following command each time you need to rebuild the tap.
 
 ```bash
-$ python setup.py install
+  python3 -m venv venv
+  . venv/bin/activate
+  pip install --upgrade pip
+  pip install .
 ```
 
 ### Debugging in Visual Studio Code

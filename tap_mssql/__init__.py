@@ -66,7 +66,7 @@ FLOAT_TYPES = set(["float", "double", "real"])
 
 DECIMAL_TYPES = set(["decimal", "number", "money", "smallmoney", "numeric"])
 
-DATETIME_TYPES = set(["datetime2", "datetime", "timestamp", "smalldatetime"])
+DATETIME_TYPES = set(["datetime2", "datetime", "datetimeoffset", "timestamp", "smalldatetime"])
 
 DATE_TYPES = set(["date"])
 
@@ -105,8 +105,12 @@ def schema_for_column(c, config):
     elif data_type in BYTES_FOR_INTEGER_TYPE:
         result.type = ["null", "integer"]
         bits = BYTES_FOR_INTEGER_TYPE[data_type] * 8
-        result.minimum = 0 - 2 ** (bits - 1)
-        result.maximum = 2 ** (bits - 1) - 1
+        if data_type == 'tinyint':
+            result.minimum = 0
+            result.maximum = 255
+        else:
+            result.minimum = 0 - 2 ** (bits - 1)
+            result.maximum = 2 ** (bits - 1) - 1
 
     elif data_type in FLOAT_TYPES:
         if use_singer_decimal:
@@ -135,6 +139,7 @@ def schema_for_column(c, config):
             result.maxLength = c.character_maximum_length
 
     elif data_type in DATETIME_TYPES:
+        result.additionalProperties = {"sql_data_type": data_type}
         result.type = ["null", "string"]
         result.format = "date-time"
 
