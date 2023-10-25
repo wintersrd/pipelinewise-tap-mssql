@@ -135,12 +135,13 @@ def schema_for_column(c, config):
         # https://docs.microsoft.com/en-us/sql/relational-databases/system-information-schema-views/columns-transact-sql?view=sql-server-ver15
         # -1 is not valid JSON schema
         # https://json-schema.org/understanding-json-schema/reference/string.html#length
-        if c.character_maximum_length != -1:
-            # result.maxLength = c.character_maximum_length
-            if c.character_maximum_length is not None:
-                result.maxLength = c.character_maximum_length + 20
-            else:
-                result.maxLength = c.character_maximum_length
+        
+        # if c.character_maximum_length != -1:
+        #     # result.maxLength = c.character_maximum_length
+        #     if c.character_maximum_length is not None:
+        #         result.maxLength = c.character_maximum_length + 20
+        #     else:
+        #         result.maxLength = c.character_maximum_length
 
     elif data_type in DATETIME_TYPES:
         result.additionalProperties = {"sql_data_type": data_type}
