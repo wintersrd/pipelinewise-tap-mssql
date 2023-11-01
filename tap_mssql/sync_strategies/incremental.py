@@ -46,6 +46,8 @@ def sync_table(mssql_conn, config, catalog_entry, state, columns):
 
     singer.write_message(activate_version_message)
     LOGGER.info("Beginning SQL")
+    LOGGER.info(replication_key_value)
+    
     with connect_with_backoff(mssql_conn) as open_conn:
         with open_conn.cursor() as cur:
             select_sql = common.generate_select_sql(catalog_entry, columns)
@@ -62,7 +64,8 @@ def sync_table(mssql_conn, config, catalog_entry, state, columns):
                 params["replication_key_value"] = replication_key_value
             elif replication_key_metadata is not None:
                 select_sql += ' ORDER BY "{}" ASC'.format(replication_key_metadata)
-
+            
+            LOGGER.info(params)
             common.sync_query(
                 cur, catalog_entry, state, select_sql, columns, stream_version, params, config
             )
