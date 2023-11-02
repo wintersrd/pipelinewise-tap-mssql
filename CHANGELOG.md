@@ -1,3 +1,7 @@
+# tap-mssql 2.2.1 2023-10-30
+
+* Bug Fix. Removing test code which slipped into the release, and adjusting offending code with correct dynamic column name.
+
 # tap-mssql 2.2.0 2023-08-23
 
 This feature increases support for SQL Datatypes.

@@ -126,7 +126,7 @@ def prepare_columns_sql(catalog_entry, c):
                     """
         elif sql_data_type == 'datetimeoffset':
             return f"""case when {column_name} is not null then
-                      CONVERT(VARCHAR,dt_offset_col,127)
+                      CONVERT(VARCHAR,{column_name},127)
                     else null end
                     """
 
