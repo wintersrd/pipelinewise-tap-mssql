@@ -289,7 +289,7 @@ def discover_catalog(mssql_conn, config):
             md_map = metadata.write(md_map, (), "database-name", table_schema)
 
             is_view = table_info[table_schema][table_name]["is_view"]
-
+            
             if table_schema in table_info and table_name in table_info[table_schema]:
                 row_count = table_info[table_schema][table_name].get("row_count")
 
@@ -298,7 +298,12 @@ def discover_catalog(mssql_conn, config):
 
                 md_map = metadata.write(md_map, (), "is-view", is_view)
 
-            key_properties = [c.column_name for c in cols if c.is_primary_key == 1]
+            # If the source table is not a view then use the primary_key details defined at the source
+            # Otherwise use the metadata details that have been provided in the config
+            if not is_view:
+                key_properties = [c.column_name for c in cols if c.is_primary_key == 1]
+            else:
+                key_properties = table_info[table_schema][table_name]["table_key_properties"]
 
             md_map = metadata.write(md_map, (), "table-key-properties", key_properties)
 
