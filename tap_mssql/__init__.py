@@ -303,7 +303,7 @@ def discover_catalog(mssql_conn, config):
             if not is_view:
                 key_properties = [c.column_name for c in cols if c.is_primary_key == 1]
             else:
-                print(table_info)
+                LOGGER.info(table_info)
                 key_properties = table_info[table_schema][table_name]["table_key_properties"]
 
             md_map = metadata.write(md_map, (), "table-key-properties", key_properties)
