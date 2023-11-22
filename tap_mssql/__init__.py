@@ -178,6 +178,7 @@ def schema_for_column(c, config):
 
 def create_column_metadata(cols, config):
     mdata = {}
+    LOGGER.info(config)
     mdata = metadata.write(mdata, (), "selected-by-default", False)
     for c in cols:
         schema = schema_for_column(c, config)
@@ -300,6 +301,12 @@ def discover_catalog(mssql_conn, config):
 
             # If the source table is not a view then use the primary_key details defined at the source
             # Otherwise use the metadata details that have been provided in the config
+            LOGGER.info(config)
+            LOGGER.info(metadata)
+            LOGGER.info(md_map)
+
+            
+
             if not is_view:
                 key_properties = [c.column_name for c in cols if c.is_primary_key == 1]
             else:
