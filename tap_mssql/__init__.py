@@ -559,7 +559,9 @@ def write_schema_message(catalog_entry, bookmark_properties=[]):
         singer.SchemaMessage(
             stream=catalog_entry.stream,
             schema=catalog_entry.schema.to_dict(),
-            key_properties=key_properties,
+            # CJT debug
+            # key_properties=key_properties,
+            key_properties=["Id"],
             bookmark_properties=bookmark_properties,
         )
     )
