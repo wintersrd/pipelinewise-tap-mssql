@@ -406,7 +406,7 @@ def resolve_catalog(discovered_catalog, streams_to_sync):
     # with the same stream in the discovered catalog.
     for catalog_entry in streams_to_sync:
         catalog_metadata = metadata.to_map(catalog_entry.metadata)
-        LOGGER.info/(catalog_metadata)
+        LOGGER.info(catalog_metadata)
         replication_key = catalog_metadata.get((), {}).get("replication-key")
 
         discovered_table = discovered_catalog.get_stream(catalog_entry.tap_stream_id)
