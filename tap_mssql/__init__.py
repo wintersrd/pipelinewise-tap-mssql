@@ -654,9 +654,8 @@ def sync_non_cdc_streams(mssql_conn, non_cdc_catalog, config, state):
         md_map = metadata.to_map(catalog_entry.metadata)
         replication_method = md_map.get((), {}).get("replication-method")
         replication_key = md_map.get((), {}).get("replication-key")
-        key_properties_md = md_map.get((), {}).get("table-key-properties")
         primary_keys = common.get_key_properties(catalog_entry)
-        LOGGER.info(key_properties_md)
+
         start_lsn = md_map.get((), {}).get("lsn")
         LOGGER.info(f"Table {catalog_entry.table} proposes {replication_method} sync")
         if not replication_method and config.get("default_replication_method"):
