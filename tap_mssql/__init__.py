@@ -304,9 +304,8 @@ def discover_catalog(mssql_conn, config):
             if not is_view:
                 key_properties = [c.column_name for c in cols if c.is_primary_key == 1]
             else:
-                catalog_metadata = metadata.to_map(catalog_entry.metadata)
-                LOGGER.info(catalog_metadata)
-                key_properties = catalog_metadata.get((), {}).get("table-key-properties")
+                key_properties = [c.column_name for c in cols if c.is_primary_key == 1]
+                # key_properties = catalog_metadata.get((), {}).get("table-key-properties")
 
 
             md_map = metadata.write(md_map, (), "table-key-properties", key_properties)
@@ -655,7 +654,9 @@ def sync_non_cdc_streams(mssql_conn, non_cdc_catalog, config, state):
         md_map = metadata.to_map(catalog_entry.metadata)
         replication_method = md_map.get((), {}).get("replication-method")
         replication_key = md_map.get((), {}).get("replication-key")
+        key_properties_md = md_map.get((), {}).get("table-key-properties")
         primary_keys = common.get_key_properties(catalog_entry)
+        LOGGER.info(key_properties_md)
         start_lsn = md_map.get((), {}).get("lsn")
         LOGGER.info(f"Table {catalog_entry.table} proposes {replication_method} sync")
         if not replication_method and config.get("default_replication_method"):
