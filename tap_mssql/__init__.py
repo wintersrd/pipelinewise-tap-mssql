@@ -284,8 +284,9 @@ def discover_catalog(mssql_conn, config):
                 properties={c.column_name: schema_for_column(c, config) for c in cols},
             )
             md = create_column_metadata(cols, config)
+            
             md_map = metadata.to_map(md)
-
+            
             md_map = metadata.write(md_map, (), "database-name", table_schema)
 
             is_view = table_info[table_schema][table_name]["is_view"]
@@ -303,8 +304,10 @@ def discover_catalog(mssql_conn, config):
             if not is_view:
                 key_properties = [c.column_name for c in cols if c.is_primary_key == 1]
             else:
-                LOGGER.info(table_info)
-                key_properties = table_info[table_schema][table_name]["table_key_properties"]
+                catalog_metadata = metadata.to_map(catalog_entry.metadata)
+                LOGGER.info(catalog_metadata)
+                key_properties = catalog_metadata.get((), {}).get("table-key-properties")
+
 
             md_map = metadata.write(md_map, (), "table-key-properties", key_properties)
 
