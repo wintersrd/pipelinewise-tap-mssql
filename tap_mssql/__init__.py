@@ -544,7 +544,20 @@ def get_cdc_streams(mssql_conn, catalog, config, state):
 
 
 def write_schema_message(catalog_entry, bookmark_properties=[]):
-    key_properties = common.get_key_properties(catalog_entry)
+
+
+    # PK as define in the Meltano config metadata: table-key-properties
+    md_map = metadata.to_map(catalog_entry.metadata)
+    key_properties_config = md_map.get((), {}).get("table-key-properties")
+
+    # PK as defined in the source table in MSSQL
+    key_properties_source = common.get_key_properties(catalog_entry)
+
+    # Use the PK defined in the config, otherwise use the PK in the source data
+    if key_properties_config is not None and isinstance(key_properties_config, list):
+        key_properties = key_properties_config
+    else:
+        key_properties = key_properties_source
 
     singer.write_message(
         singer.SchemaMessage(
