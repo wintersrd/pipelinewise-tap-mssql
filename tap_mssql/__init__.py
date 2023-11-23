@@ -299,15 +299,6 @@ def discover_catalog(mssql_conn, config):
 
                 md_map = metadata.write(md_map, (), "is-view", is_view)
 
-            # If the source table is not a view then use the primary_key details defined at the source
-            # Otherwise use the metadata details that have been provided in the config
-            if not is_view:
-                key_properties = [c.column_name for c in cols if c.is_primary_key == 1]
-            else:
-                key_properties = [c.column_name for c in cols if c.is_primary_key == 1]
-                # key_properties = catalog_metadata.get((), {}).get("table-key-properties")
-
-
             md_map = metadata.write(md_map, (), "table-key-properties", key_properties)
 
             entry = CatalogEntry(
