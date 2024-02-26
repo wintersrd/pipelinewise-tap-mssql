@@ -1,3 +1,7 @@
+# tap-mssql 2.2.3 2024-02-26
+
+* Bug Fix. Enhancing singer-decimal output for numeric data to correctly output the correct datatype - string and precision.
+
 # tap-mssql 2.2.1 2023-10-30
 
 * Bug Fix. Removing test code which slipped into the release, and adjusting offending code with correct dynamic column name.
