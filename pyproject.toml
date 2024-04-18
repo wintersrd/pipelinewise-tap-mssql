@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tap-mssql"
-version = "2.2.3"
+version = "2.3.0"
 description = "A pipelinewise compatible tap for connecting Microsoft SQL Server"
 authors = ["Rob Winters <wintersrd@gmail.com>"]
 license = "GNU Affero"
