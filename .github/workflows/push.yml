@@ -18,7 +18,7 @@ jobs:
           python-version: 3.9.13
 
       - name: Install Poetry
-        run: pip install poetry>=1.4.2
+        run: pip install --upgrade pip "poetry==1.8.*"
 
       - name: Cache Poetry virtualenv
         uses: actions/cache@v3
