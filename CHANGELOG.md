@@ -1,3 +1,7 @@
+# tap-mssql 2.3.0 2024-04-18
+
+* Bug Fix. Change pendulum DateTime type to datetime.datetime as pymssql 2.3.0 is no longer compatible with query parameters as pendulum DateTime (https://github.com/pymssql/pymssql/issues/889)
+
 # tap-mssql 2.2.3 2024-02-26
 
 * Bug Fix. Enhancing singer-decimal output for numeric data to correctly output the correct datatype - string and precision.
