@@ -269,6 +269,9 @@ class TestSelectsAppropriateColumns(unittest.TestCase):
             type="object",
             properties={
                 "a": Schema(None, inclusion="available"),
+                "a1": Schema(None, inclusion="available"),
+                "a2": Schema(None, inclusion="available"),
+                "a3": Schema(None, inclusion="available"),
                 "b": Schema(None, inclusion="unsupported"),
                 "c": Schema(None, inclusion="automatic"),
             },
@@ -277,7 +280,7 @@ class TestSelectsAppropriateColumns(unittest.TestCase):
         got_cols = tap_mssql.desired_columns(selected_cols, table_schema)
 
         self.assertEqual(
-            got_cols, set(["a", "c"]), "Keep automatic as well as selected, available columns."
+            list(got_cols), ["a", "a1", "a2", "a3", "c"], "Keep automatic as well as selected, available columns. Ordered correctly."
         )
 
 
