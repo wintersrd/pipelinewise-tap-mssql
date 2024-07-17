@@ -368,7 +368,7 @@ def desired_columns(selected : list, table_schema):
             not_selected_but_automatic,
         )
 
-    desired = [c for c in selected if c in available or c in automatic]
+    desired = [c for c in all_columns if (c in available and c in selected) or c in automatic]
 
     return list(dict.fromkeys(desired))
 
