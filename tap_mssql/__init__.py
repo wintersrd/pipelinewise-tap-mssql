@@ -314,48 +314,63 @@ def do_discover(mssql_conn, config):
     discover_catalog(mssql_conn, config).dump()
 
 
-def desired_columns(selected, table_schema):
+def desired_columns(selected : list, table_schema):
     """Return the set of column names we need to include in the SELECT.
 
     selected - set of column names marked as selected in the input catalog
     table_schema - the most recently discovered Schema for the table
     """
-    all_columns = set()
-    available = set()
-    automatic = set()
-    unsupported = set()
+    all_columns = [column for column in table_schema.properties.keys()]
+    
+    available = [
+        column for column, column_schema 
+        in table_schema.properties.items() 
+        if column_schema.inclusion == 'available'
+    ]
+    
+    automatic = [
+        column for column, column_schema
+        in table_schema.properties.items() 
+        if column_schema.inclusion == 'automatic'
+    ]
+    
+    unsupported = [
+        column for column, column_schema
+        in table_schema.properties.items()
+        if column_schema.inclusion == 'unsupported'
+    ]
+    
+    unknown = [
+        (column,column_schema.inclusion)
+        for column, column_schema 
+        in table_schema.properties.items() 
+        if column_schema.inclusion not in ['available', 'automatic', 'unsupported']
+    ]
 
-    for column, column_schema in table_schema.properties.items():
-        all_columns.add(column)
-        inclusion = column_schema.inclusion
-        if inclusion == "automatic":
-            automatic.add(column)
-        elif inclusion == "available":
-            available.add(column)
-        elif inclusion == "unsupported":
-            unsupported.add(column)
-        else:
-            raise Exception("Unknown inclusion " + inclusion)
+    if unknown:
+        raise Exception("Unknown inclusions " + unknown)
 
-    selected_but_unsupported = selected.intersection(unsupported)
+    selected_but_unsupported = [c for c in selected if c in unsupported]
     if selected_but_unsupported:
         LOGGER.warning(
             "Columns %s were selected but are not supported. Skipping them.",
             selected_but_unsupported,
         )
 
-    selected_but_nonexistent = selected.difference(all_columns)
+    selected_but_nonexistent = [c for c in selected if c not in all_columns]
     if selected_but_nonexistent:
         LOGGER.warning("Columns %s were selected but do not exist.", selected_but_nonexistent)
 
-    not_selected_but_automatic = automatic.difference(selected)
+    not_selected_but_automatic = [c for c in automatic if c not in selected]
     if not_selected_but_automatic:
         LOGGER.warning(
             "Columns %s are primary keys but were not selected. Adding them.",
             not_selected_but_automatic,
         )
 
-    return selected.intersection(available).union(automatic)
+    desired = [c for c in selected if c in available or c in automatic]
+
+    return list(dict.fromkeys(desired))
 
 
 def is_valid_currently_syncing_stream(selected_stream, state):
@@ -405,11 +420,11 @@ def resolve_catalog(discovered_catalog, streams_to_sync):
             )
             continue
 
-        selected = {
+        selected = [
             k
-            for k, v in discovered_table.schema.properties.items()
+            for k in discovered_table.schema.properties.keys()
             if common.property_is_selected(catalog_entry, k) or k == replication_key
-        }
+        ]
 
         # These are the columns we need to select
         columns = desired_columns(selected, discovered_table.schema)
