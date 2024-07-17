@@ -294,10 +294,7 @@ class TestInvalidInclusion(unittest.TestCase):
             },
         )
 
-        self.assertRaises(Exception, tap_mssql.desired_columns(selected_cols, table_schema))
-
-#TODO: Add further tests on the desired_columns function - e.g. no duplicates, invalid inclusion
-
+        self.assertRaises(Exception, tap_mssql.desired_columns, selected_cols, table_schema)
 
 class TestSchemaMessages(unittest.TestCase):
     def runTest(self):
