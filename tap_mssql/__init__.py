@@ -348,7 +348,7 @@ def desired_columns(selected : list, table_schema):
     ]
 
     if unknown:
-        raise Exception("Unknown inclusions " + unknown)
+        raise Exception(f"Unknown inclusions: {unknown}")
 
     selected_but_unsupported = [c for c in selected if c in unsupported]
     if selected_but_unsupported:
