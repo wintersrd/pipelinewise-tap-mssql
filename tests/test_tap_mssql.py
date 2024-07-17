@@ -264,7 +264,7 @@ class TestTypeMapping(unittest.TestCase):
 
 class TestSelectsAppropriateColumns(unittest.TestCase):
     def runTest(self):
-        selected_cols = ["a", "a1", "a2", "b", "d"]
+        selected_cols = set(["a", "a1", "a2", "b", "d"])
         table_schema = Schema(
             type="object",
             properties={
