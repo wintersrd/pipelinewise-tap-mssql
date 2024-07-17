@@ -264,7 +264,7 @@ class TestTypeMapping(unittest.TestCase):
 
 class TestSelectsAppropriateColumns(unittest.TestCase):
     def runTest(self):
-        selected_cols = set(["a", "b", "d"])
+        selected_cols = ["a", "a1", "a2", "b", "d"]
         table_schema = Schema(
             type="object",
             properties={
@@ -280,7 +280,7 @@ class TestSelectsAppropriateColumns(unittest.TestCase):
         got_cols = tap_mssql.desired_columns(selected_cols, table_schema)
 
         self.assertEqual(
-            list(got_cols), ["a", "a1", "a2", "a3", "c"], "Keep automatic as well as selected, available columns. Ordered correctly."
+            list(got_cols), ["a", "a1", "a2", "c"], "Keep automatic as well as selected, available columns. Ordered correctly."
         )
 
 
