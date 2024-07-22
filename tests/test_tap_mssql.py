@@ -264,11 +264,14 @@ class TestTypeMapping(unittest.TestCase):
 
 class TestSelectsAppropriateColumns(unittest.TestCase):
     def runTest(self):
-        selected_cols = set(["a", "b", "d"])
+        selected_cols = ["a", "a", "a1", "a2", "b", "d"]
         table_schema = Schema(
             type="object",
             properties={
                 "a": Schema(None, inclusion="available"),
+                "a1": Schema(None, inclusion="available"),
+                "a2": Schema(None, inclusion="available"),
+                "a3": Schema(None, inclusion="available"),
                 "b": Schema(None, inclusion="unsupported"),
                 "c": Schema(None, inclusion="automatic"),
             },
@@ -277,9 +280,21 @@ class TestSelectsAppropriateColumns(unittest.TestCase):
         got_cols = tap_mssql.desired_columns(selected_cols, table_schema)
 
         self.assertEqual(
-            got_cols, set(["a", "c"]), "Keep automatic as well as selected, available columns."
+            got_cols, ["a", "a1", "a2", "c"], "Keep automatic as well as selected, available columns. Ordered correctly."
         )
 
+class TestInvalidInclusion(unittest.TestCase):
+    def runTest(self):
+        selected_cols = ["a", "e"]
+        table_schema = Schema(
+            type="object",
+            properties={
+                "a": Schema(None, inclusion="available"),
+                "e": Schema(None, inclusion="invalid"),
+            },
+        )
+
+        self.assertRaises(Exception, tap_mssql.desired_columns, selected_cols, table_schema)
 
 class TestSchemaMessages(unittest.TestCase):
     def runTest(self):

@@ -1,3 +1,7 @@
+# tap-mssql 2.3.1 2024-07-22
+
+* Bug Fix. Issue #62 - change to column selection using lists instead of sets to preserve column ordering
+
 # tap-mssql 2.3.0 2024-04-18
 
 * Bug Fix. Change pendulum DateTime type to datetime.datetime as pymssql 2.3.0 is no longer compatible with query parameters as pendulum DateTime (https://github.com/pymssql/pymssql/issues/889)
