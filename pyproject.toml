@@ -17,7 +17,7 @@ tap-mssql = 'tap_mssql.__init__:main'
 python = "^3.7"
 attrs = ">=16.3.0"
 pendulum = ">=1.2.0"
-singer-python = "5.9.0"
+pipelinewise-singer-python = { git = "https://github.com/s7clarke10/pipelinewise-singer-python", tag = "4.0.0" }
 # pymssql==2.2.8 broken: https://github.com/pymssql/pymssql/issues/833
 pymssql = ">=2.1.4,!=2.2.8"
 backoff = ">=1.8.0"
