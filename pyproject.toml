@@ -37,5 +37,5 @@ bumpversion = "^0.6.0"
 tox = "^3.28.0"
 
 [build-system]
-requires = ["poetry==1.4.2"]
+requires = ["poetry==1.8.3"]
 build-backend = "poetry.masonry.api"
