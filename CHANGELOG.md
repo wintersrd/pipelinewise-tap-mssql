@@ -1,3 +1,10 @@
+# tap-mssql 2.4.0 2024-08-08
+
+* Moving to patched version of Singer Framework plus using msgspec rather than orjson for speed.
+* Fixing tox file for test pipeline based on changes to the latest MSSQL docker image.
+* Patching dependencies
+* Explicitly setting python version 3.8 -> 3.12
+
 # tap-mssql 2.3.1 2024-07-22
 
 * Bug Fix. Issue #62 - change to column selection using lists instead of sets to preserve column ordering
