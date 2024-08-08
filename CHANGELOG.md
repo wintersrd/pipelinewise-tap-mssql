@@ -1,9 +1,13 @@
 # tap-mssql 2.4.0 2024-08-08
 
-* Moving to patched version of Singer Framework plus using msgspec rather than orjson for speed.
-* Fixing tox file for test pipeline based on changes to the latest MSSQL docker image.
-* Patching dependencies
+* Moving to patched version of Singer Framework plus using msgspec rather than orjson for JSON serialization speed.
+* Adjusting tox file for test pipeline to point to correct location of the sqlcmd in the latest MSSQL docker image.
+* Adjusting tox file. Added -No switch calling sqlcmd to allow user/password connection to MSSQL.
+* Patching dependencies.
+* Pinned Requests to "2.31.0". This is required as the tox pipeline fails with a Docker API error with requests "2.32.x".
 * Explicitly setting python version 3.8 -> 3.12
+* Moving to using recommended poetry-core for build. https://python-poetry.org/docs/pyproject/#poetry-and-pep-517
+* NOTE: Recommend refactoring to avoid using tox-poetry-installer as restrictive dependencies are stopping tox and docker updates. This may resolve the requests/docker api issue.
 
 # tap-mssql 2.3.1 2024-07-22
 
