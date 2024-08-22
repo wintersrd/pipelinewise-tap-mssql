@@ -964,13 +964,13 @@ testing = ["covdefaults (>=2.3)", "pytest (>=8.2.2)", "pytest-cov (>=5)", "pytes
 
 [[package]]
 name = "pytest"
-version = "8.3.2"
+version = "7.4.4"
 description = "pytest: simple powerful testing with Python"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.7"
 files = [
-    {file = "pytest-8.3.2-py3-none-any.whl", hash = "sha256:4ba08f9ae7dcf84ded419494d229b48d0903ea6407b030eaec46df5e6a73bba5"},
-    {file = "pytest-8.3.2.tar.gz", hash = "sha256:c132345d12ce551242c87269de812483f5bcc87cdbb4722e48487ba194f9fdce"},
+    {file = "pytest-7.4.4-py3-none-any.whl", hash = "sha256:b090cdf5ed60bf4c45261be03239c2c1c22df034fbffe691abe93cd80cea01d8"},
+    {file = "pytest-7.4.4.tar.gz", hash = "sha256:2cf0005922c6ace4a3e2ec8b4080eb0d9753fdc93107415332f50ce9e7994280"},
 ]
 
 [package.dependencies]
@@ -978,21 +978,21 @@ colorama = {version = "*", markers = "sys_platform == \"win32\""}
 exceptiongroup = {version = ">=1.0.0rc8", markers = "python_version < \"3.11\""}
 iniconfig = "*"
 packaging = "*"
-pluggy = ">=1.5,<2"
-tomli = {version = ">=1", markers = "python_version < \"3.11\""}
+pluggy = ">=0.12,<2.0"
+tomli = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
 
 [package.extras]
-dev = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
+testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
 
 [[package]]
 name = "pytest-cov"
-version = "5.0.0"
+version = "4.1.0"
 description = "Pytest plugin for measuring coverage."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.7"
 files = [
-    {file = "pytest-cov-5.0.0.tar.gz", hash = "sha256:5837b58e9f6ebd335b0f8060eecce69b662415b16dc503883a02f45dfeb14857"},
-    {file = "pytest_cov-5.0.0-py3-none-any.whl", hash = "sha256:4f0764a1219df53214206bf1feea4633c3b558a2925c8b59f144f682861ce652"},
+    {file = "pytest-cov-4.1.0.tar.gz", hash = "sha256:3904b13dfbfec47f003b8e77fd5b589cd11904a21ddf1ab38a64f204d6a10ef6"},
+    {file = "pytest_cov-4.1.0-py3-none-any.whl", hash = "sha256:6ba70b9e97e69fcc3fb45bfeab2d0a138fb65c4d0d6a41ef33983ad114be8c3a"},
 ]
 
 [package.dependencies]
@@ -1000,7 +1000,7 @@ coverage = {version = ">=5.2.1", extras = ["toml"]}
 pytest = ">=4.6"
 
 [package.extras]
-testing = ["fields", "hunter", "process-tests", "pytest-xdist", "virtualenv"]
+testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtualenv"]
 
 [[package]]
 name = "pytest-datafiles"
@@ -1035,13 +1035,13 @@ dev = ["pre-commit", "pytest-asyncio", "tox"]
 
 [[package]]
 name = "pytest-sugar"
-version = "1.0.0"
+version = "0.9.7"
 description = "pytest-sugar is a plugin for pytest that changes the default look and feel of pytest (e.g. progressbar, show tests that fail instantly)."
 optional = false
 python-versions = "*"
 files = [
-    {file = "pytest-sugar-1.0.0.tar.gz", hash = "sha256:6422e83258f5b0c04ce7c632176c7732cab5fdb909cb39cca5c9139f81276c0a"},
-    {file = "pytest_sugar-1.0.0-py3-none-any.whl", hash = "sha256:70ebcd8fc5795dc457ff8b69d266a4e2e8a74ae0c3edc749381c64b5246c8dfd"},
+    {file = "pytest-sugar-0.9.7.tar.gz", hash = "sha256:f1e74c1abfa55f7241cf7088032b6e378566f16b938f3f08905e2cf4494edd46"},
+    {file = "pytest_sugar-0.9.7-py2.py3-none-any.whl", hash = "sha256:8cb5a4e5f8bbcd834622b0235db9e50432f4cbd71fef55b467fe44e43701e062"},
 ]
 
 [package.dependencies]
@@ -1394,18 +1394,19 @@ testing = ["build[virtualenv] (>=1.2.1)", "covdefaults (>=2.3)", "detect-test-po
 
 [[package]]
 name = "tox-docker"
-version = "5.0.0"
-description = "Manage lifecycle of docker containers during Tox test runs"
+version = "4.1.0"
+description = "Launch a docker instance around test runs"
 optional = false
 python-versions = "*"
 files = [
-    {file = "tox_docker-5.0.0-py3-none-any.whl", hash = "sha256:7dd7293ea286dff422eab6c23a70652147b275eb436c02e97a90ac59ba41f8a8"},
-    {file = "tox_docker-5.0.0.tar.gz", hash = "sha256:3cbfe70713910b9dbb9f74e20a5c42f19da42d375bac7d6a3ccc11aed0738d7a"},
+    {file = "tox-docker-4.1.0.tar.gz", hash = "sha256:0317e692dc80f2197eaf9c905dcb8d1d1f9d5bf2686ecfd83c22a1da9d23fb24"},
+    {file = "tox_docker-4.1.0-py2.py3-none-any.whl", hash = "sha256:444c72192a2443d2b4db5766545d4413ea683cc488523d770e2e216f15fa3086"},
 ]
 
 [package.dependencies]
-docker = ">=4.0,<8.0"
-tox = ">=4.0.0,<5.0"
+docker = ">=4.0,<7.0"
+packaging = "*"
+tox = ">=3.0.0,<5.0"
 
 [[package]]
 name = "typing-extensions"
@@ -1500,4 +1501,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.13"
-content-hash = "b90f0283ccd0894dbe9c00a4b3fc2d1a1bbdf112c7194770251988a19f4a2fa5"
+content-hash = "64d064fd99ac23d8f5f24b0fac93af251d2843ba3f6367c367f0294b5b941868"
