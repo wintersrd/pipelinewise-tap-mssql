@@ -33,7 +33,7 @@ pytest-datafiles = "^3.0"
 tox-docker = "5.0.0"
 pre-commit = "^3.5.0"
 bumpversion = "^0.6.0"
-requests = "2.32.3"
+requests = "2.31.0"
 tox = "^4.18.0"
 
 [build-system]
