@@ -1394,19 +1394,18 @@ testing = ["build[virtualenv] (>=1.2.1)", "covdefaults (>=2.3)", "detect-test-po
 
 [[package]]
 name = "tox-docker"
-version = "4.1.0"
-description = "Launch a docker instance around test runs"
+version = "5.0.0"
+description = "Manage lifecycle of docker containers during Tox test runs"
 optional = false
 python-versions = "*"
 files = [
-    {file = "tox-docker-4.1.0.tar.gz", hash = "sha256:0317e692dc80f2197eaf9c905dcb8d1d1f9d5bf2686ecfd83c22a1da9d23fb24"},
-    {file = "tox_docker-4.1.0-py2.py3-none-any.whl", hash = "sha256:444c72192a2443d2b4db5766545d4413ea683cc488523d770e2e216f15fa3086"},
+    {file = "tox_docker-5.0.0-py3-none-any.whl", hash = "sha256:7dd7293ea286dff422eab6c23a70652147b275eb436c02e97a90ac59ba41f8a8"},
+    {file = "tox_docker-5.0.0.tar.gz", hash = "sha256:3cbfe70713910b9dbb9f74e20a5c42f19da42d375bac7d6a3ccc11aed0738d7a"},
 ]
 
 [package.dependencies]
-docker = ">=4.0,<7.0"
-packaging = "*"
-tox = ">=3.0.0,<5.0"
+docker = ">=4.0,<8.0"
+tox = ">=4.0.0,<5.0"
 
 [[package]]
 name = "typing-extensions"
@@ -1501,4 +1500,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.13"
-content-hash = "322bcde132941a9ca41011e19071ae0b43cfc376404650dfe0529fa23db5c01e"
+content-hash = "8bcd2f3a258bc171c21335524fc43dbaaaf6b24bca3d0b2c20084181954d831e"
