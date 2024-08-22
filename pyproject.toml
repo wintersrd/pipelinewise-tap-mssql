@@ -24,18 +24,17 @@ backoff = ">=1.8.0"
 
 [tool.poetry.dev-dependencies]
 docker = "^6.1.3"
-pytest = "^7.0.0"
+pytest = "^7.2.0"
 pytest-cov = "^4.1.0"
 mypy = "^1.10.1"
 pytest-mock = "^3.14.0"
 pytest-sugar = "^0.9.7"
-pytest-datafiles = "^2.0"
-tox-poetry-installer = "^0.10.3"
+pytest-datafiles = "^3.0"
 tox-docker = "4.1.0"
 pre-commit = "^3.5.0"
 bumpversion = "^0.6.0"
 requests = "2.31.0"
-tox = "^3.28.0"
+tox = "^4.18.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
