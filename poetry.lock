@@ -400,24 +400,25 @@ files = [
 
 [[package]]
 name = "docker"
-version = "6.1.3"
+version = "7.1.0"
 description = "A Python library for the Docker Engine API."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "docker-6.1.3-py3-none-any.whl", hash = "sha256:aecd2277b8bf8e506e484f6ab7aec39abe0038e29fa4a6d3ba86c3fe01844ed9"},
-    {file = "docker-6.1.3.tar.gz", hash = "sha256:aa6d17830045ba5ef0168d5eaa34d37beeb113948c413affe1d5991fc11f9a20"},
+    {file = "docker-7.1.0-py3-none-any.whl", hash = "sha256:c96b93b7f0a746f9e77d325bcfb87422a3d8bd4f03136ae8a85b37f1898d5fc0"},
+    {file = "docker-7.1.0.tar.gz", hash = "sha256:ad8c70e6e3f8926cb8a92619b832b4ea5299e2831c14284663184e200546fa6c"},
 ]
 
 [package.dependencies]
-packaging = ">=14.0"
 pywin32 = {version = ">=304", markers = "sys_platform == \"win32\""}
 requests = ">=2.26.0"
 urllib3 = ">=1.26.0"
-websocket-client = ">=0.32.0"
 
 [package.extras]
+dev = ["coverage (==7.2.7)", "pytest (==7.4.2)", "pytest-cov (==4.1.0)", "pytest-timeout (==2.1.0)", "ruff (==0.1.8)"]
+docs = ["myst-parser (==0.18.0)", "sphinx (==5.1.1)"]
 ssh = ["paramiko (>=2.4.3)"]
+websockets = ["websocket-client (>=1.3.0)"]
 
 [[package]]
 name = "exceptiongroup"
@@ -1379,19 +1380,18 @@ testing = ["build[virtualenv] (>=1.2.1)", "covdefaults (>=2.3)", "detect-test-po
 
 [[package]]
 name = "tox-docker"
-version = "4.1.0"
-description = "Launch a docker instance around test runs"
+version = "5.0.0"
+description = "Manage lifecycle of docker containers during Tox test runs"
 optional = false
 python-versions = "*"
 files = [
-    {file = "tox-docker-4.1.0.tar.gz", hash = "sha256:0317e692dc80f2197eaf9c905dcb8d1d1f9d5bf2686ecfd83c22a1da9d23fb24"},
-    {file = "tox_docker-4.1.0-py2.py3-none-any.whl", hash = "sha256:444c72192a2443d2b4db5766545d4413ea683cc488523d770e2e216f15fa3086"},
+    {file = "tox_docker-5.0.0-py3-none-any.whl", hash = "sha256:7dd7293ea286dff422eab6c23a70652147b275eb436c02e97a90ac59ba41f8a8"},
+    {file = "tox_docker-5.0.0.tar.gz", hash = "sha256:3cbfe70713910b9dbb9f74e20a5c42f19da42d375bac7d6a3ccc11aed0738d7a"},
 ]
 
 [package.dependencies]
-docker = ">=4.0,<7.0"
-packaging = "*"
-tox = ">=3.0.0,<5.0"
+docker = ">=4.0,<8.0"
+tox = ">=4.0.0,<5.0"
 
 [[package]]
 name = "typing-extensions"
@@ -1453,22 +1453,6 @@ docs = ["furo (>=2023.7.26)", "proselint (>=0.13)", "sphinx (>=7.1.2,!=7.3)", "s
 test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7)", "packaging (>=23.1)", "pytest (>=7.4)", "pytest-env (>=0.8.2)", "pytest-freezer (>=0.4.8)", "pytest-mock (>=3.11.1)", "pytest-randomly (>=3.12)", "pytest-timeout (>=2.1)", "setuptools (>=68)", "time-machine (>=2.10)"]
 
 [[package]]
-name = "websocket-client"
-version = "1.8.0"
-description = "WebSocket client for Python with low level API options"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "websocket_client-1.8.0-py3-none-any.whl", hash = "sha256:17b44cc997f5c498e809b22cdf2d9c7a9e71c02c8cc2b6c56e7c2d1239bfa526"},
-    {file = "websocket_client-1.8.0.tar.gz", hash = "sha256:3239df9f44da632f96012472805d40a23281a991027ce11d2f45a6f24ac4c3da"},
-]
-
-[package.extras]
-docs = ["Sphinx (>=6.0)", "myst-parser (>=2.0.0)", "sphinx-rtd-theme (>=1.1.0)"]
-optional = ["python-socks", "wsaccel"]
-test = ["websockets"]
-
-[[package]]
 name = "zipp"
 version = "3.20.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
@@ -1486,4 +1470,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.13"
-content-hash = "55312d42626af45cefd1208a723490e576606b57ac4412b0a2e1862b9d59399d"
+content-hash = "9a6b3dc8fc783f737923f3753b60fde55b532c342ed63fceb9eb01f786aaf1af"
