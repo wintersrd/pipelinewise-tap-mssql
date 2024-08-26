@@ -1,3 +1,18 @@
+# tap-mssql 2.5.0 2024-08-26
+
+* removing tox-poetry-install - Not well supported.
+* Updating integration tests vars to CAPS to support passing MSSQL Port
+* tox-docker requires expose rather than ports syntax in tox.ini
+* Bumping docker = "^6.1.3" -> "^7.1.0"
+* Bumping pytest = "^7.0.0" -> "^8.3.2"
+* Bumping pytest-cov = "^4.1.0" -> = "^5.0.0"
+* Bumping mypy = "^1.10.1" -> = "^1.11.1"
+* Bumping pytest-sugar = "^0.9.7" -> = "^1.0.0"
+* Bumping pytest-datafiles = "^2.0" ->  = "^3.0"
+* Bumping tox-docker = "4.1.0" ->  = "5.0.0"
+* Bumping requests = "2.31.0" -> "2.32.3"
+* Bumping tox = "^3.28.0" -> "^4.18.0"
+
 # tap-mssql 2.4.0 2024-08-08
 
 * Moving to patched version of Singer Framework plus using msgspec rather than orjson for JSON serialization speed.
