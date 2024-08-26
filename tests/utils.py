@@ -13,16 +13,16 @@ SCHEMA_NAME = "dbo"
 
 def get_db_config(use_env_db_name=False, use_schema_name=False):
     config = {}
-    config["user"] = os.environ.get("tap_mssql_USER", "SA")
-    config["password"] = os.environ.get("tap_mssql_PASSWORD", "testDatabase1")
-    config["host"] = os.environ.get("tap_mssql_HOST", "localhost")
+    config["user"] = os.environ.get("TAP_MSSQL_USER", "SA")
+    config["password"] = os.environ.get("TAP_MSSQL_PASSWORD", "testDatabase1")
+    config["host"] = os.environ.get("TAP_MSSQL_HOST", "localhost")
     config["database"] = DB_NAME
     config["charset"] = "utf8"
-    config["port"] = int(os.environ.get("tap_mssql_PORT", 1433))
-    config["tds_version"] = os.environ.get("tap_mssql_TDS_VERSION", "7.3")
+    config["port"] = int(os.environ.get("TAP_MSSQL_PORT", 1433))
+    config["tds_version"] = os.environ.get("TAP_MSSQL_TDS_VERSION", "7.3")
 
     if use_env_db_name:
-        config["database"] = os.environ.get("tap_mssql_DATABASE")
+        config["database"] = os.environ.get("TAP_MSSQL_DATABASE")
     elif use_schema_name:
         config["database"] = SCHEMA_NAME
     return config
