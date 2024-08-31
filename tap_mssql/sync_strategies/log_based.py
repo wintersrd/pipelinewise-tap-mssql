@@ -195,8 +195,8 @@ def sync_historic_table(mssql_conn, config, catalog_entry, state, columns, strea
         with open_conn.cursor() as cur:
 
             escaped_columns = map(lambda c: common.prepare_columns_sql(catalog_entry, c), columns)
-            table_name = catalog_entry.table
-            schema_name = common.get_database_name(catalog_entry)
+            table_name = common.escape(catalog_entry.table)
+            schema_name = common.escape(common.get_database_name(catalog_entry))
 
             if not verify_change_data_capture_table(mssql_conn, schema_name, table_name):
                 raise Exception(
@@ -289,9 +289,10 @@ def sync_table(mssql_conn, config, catalog_entry, state, columns, stream_version
             state_last_lsn = singer.get_bookmark(state, catalog_entry.tap_stream_id, "lsn")
 
             escaped_columns = map(lambda c: common.prepare_columns_sql(catalog_entry, c), columns)
-            table_name = catalog_entry.table
+            table_name = common.escape(catalog_entry.table)
             schema_name = common.get_database_name(catalog_entry)
-            schema_table = schema_name + "_" + table_name
+            schema_table = common.escape(schema_name + "_" + table_name)
+            schema_name = common.escape(schema_name)
 
             if not verify_change_data_capture_table(mssql_conn, schema_name, table_name):
                 raise Exception(
