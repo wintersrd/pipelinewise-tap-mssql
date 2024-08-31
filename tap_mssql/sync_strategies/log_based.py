@@ -195,15 +195,15 @@ def sync_historic_table(mssql_conn, config, catalog_entry, state, columns, strea
         with open_conn.cursor() as cur:
 
             escaped_columns = map(lambda c: common.prepare_columns_sql(catalog_entry, c), columns)
-            table_name = common.escape(catalog_entry.table)
-            schema_name = common.escape(common.get_database_name(catalog_entry))
+            escaped_table_name = common.escape(catalog_entry.table)
+            escaped_schema_name = common.escape(common.get_database_name(catalog_entry))
 
-            if not verify_change_data_capture_table(mssql_conn, schema_name, table_name):
+            if not verify_change_data_capture_table(mssql_conn, escaped_schema_name, escaped_table_name):
                 raise Exception(
                     (
                         "Error {}.{}: does not have change data capture enabled. Call EXEC"
                         " sys.sp_cdc_enable_table with relevant parameters to enable CDC."
-                    ).format(schema_name, table_name)
+                    ).format(escaped_schema_name, escaped_table_name)
                 )
 
             verify_read_isolation_databases(mssql_conn)
@@ -223,7 +223,7 @@ def sync_historic_table(mssql_conn, config, catalog_entry, state, columns, strea
                                 , 2 as _sdc_lsn_operation
                             FROM {}.{}
                             ;""".format(
-                ",".join(escaped_columns), schema_name, table_name
+                ",".join(escaped_columns), escaped_schema_name, escaped_table_name
             )
             params = {}
 
