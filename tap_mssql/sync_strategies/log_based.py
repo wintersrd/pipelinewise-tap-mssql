@@ -29,7 +29,10 @@ def verify_change_data_capture_table(connection, schema_name, table_name):
     )
     row = cur.fetchone()
 
-    return row[2]
+    if row:
+        return row[2]
+    else:
+        return False
 
 
 def verify_change_data_capture_databases(connection):
@@ -40,11 +43,14 @@ def verify_change_data_capture_databases(connection):
     )
     row = cur.fetchone()
 
-    LOGGER.info(
-        "CDC Databases enable : Database %s, Enabled %s",
-        *row,
-    )
-    return row
+    if row:
+        LOGGER.info(
+            "CDC Databases enable : Database %s, Enabled %s",
+            *row,
+        )
+        return row
+    else:
+        return False
 
 
 def verify_read_isolation_databases(connection):
