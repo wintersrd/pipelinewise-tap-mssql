@@ -24,7 +24,7 @@ def verify_change_data_capture_table(connection, schema_name, table_name):
                    join sys.schemas s on (s.schema_id = t.schema_id)
                    and  t.name = '{}'
                    and  s.name = '{}'""".format(
-            table_name, schema_name
+            table_name.replace('"',''), schema_name.replace('"','')
         )
     )
     row = cur.fetchone()
