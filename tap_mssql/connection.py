@@ -35,6 +35,9 @@ class MSSQLConnection(pymssql.Connection):
             "port": config.get("port", "1433"),
             "tds_version": config.get("tds_version", "7.3"),
         }
+        # Add additional conn_properties for specific version settings
+        if config.get("conn_properties"):
+            args["conn_properties"] = config.get("conn_properties")
         conn = pymssql._mssql.connect(**args)
         super().__init__(conn, False, True)
 

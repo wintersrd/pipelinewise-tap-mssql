@@ -1,5 +1,8 @@
 # tap-mssql 2.6.0 2024-09-02
-* Resolving issue replicate objects with special characters via escaping object names.
+* Resolving issue LOG_BASED tables with special characters. Escaping the object
+  names with double quotes. Issue #74
+* Providing more flexibility with database connections to support newer
+  SQL Server instances like PDW via option conn_properties config. Issue #28
 
 # tap-mssql 2.5.0 2024-08-26
 

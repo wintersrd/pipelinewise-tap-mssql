@@ -134,6 +134,25 @@ The characterset for the database / source system. The default is `utf8`, howeve
 }
 ```
 
+Optional:
+
+The `"conn_properties"` allows specific tweaking of database settings via SQL set statements to send to the database instance upon connection establishment. Can be a string or another kind of iterable of strings.
+
+The default values set if this [settings](https://pymssql.readthedocs.io/en/stable/ref/_mssql.html) is not defined are:
+
+```json
+"SET ARITHABORT ON; SET CONCAT_NULL_YIELDS_NULL ON; SET ANSI_NULLS ON; SET ANSI_NULL_DFLT_ON ON; SET ANSI_PADDING ON; SET ANSI_WARNINGS ON; SET ANSI_NULL_DFLT_ON ON; SET CURSOR_CLOSE_ON_COMMIT ON; SET QUOTED_IDENTIFIER ON; SET TEXTSIZE 2147483647;"
+```
+
+Example: override the built-in session properties supplied by pymssql by default, because one of the default settings (CURSOR_CLOSE_ON_COMMIT) is not available on PDW
+
+
+```json
+{
+  "conn_properties": "SET ARITHABORT ON; SET CONCAT_NULL_YIELDS_NULL ON; SET ANSI_NULLS ON; SET ANSI_NULL_DFLT_ON ON; SET ANSI_PADDING ON; SET ANSI_WARNINGS ON; SET ANSI_NULL_DFLT_ON ON; SET QUOTED_IDENTIFIER ON; SET TEXTSIZE 2147483647;"
+}
+```
+
 These are the same basic configuration properties used by the mssql command-line
 client (`mssql`).
 

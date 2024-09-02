@@ -761,6 +761,17 @@ def log_server_params(mssql_conn):
                     *row,
                 )
         except:
+            pass
+        # Try without the @@lock_timeout as it is not available in all platforms.
+        try:
+            with open_conn.cursor() as cur:
+                cur.execute("""SELECT @@VERSION as version, 0 as lock_wait_timeout""")
+                row = cur.fetchone()
+                LOGGER.info(
+                    "Server Parameters: " + "version: %s, " + "lock_timeout: %s, ",
+                    *row,
+                )
+        except:
             LOGGER.warning("Encountered error checking server params.")
 
 
