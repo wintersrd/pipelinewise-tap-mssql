@@ -1,3 +1,6 @@
+# tap-mssql 2.6.0 2024-09-02
+* Resolving issue replicate objects with special characters via escaping object names.
+
 # tap-mssql 2.5.0 2024-08-26
 
 * removing tox-poetry-install - Not well supported.
