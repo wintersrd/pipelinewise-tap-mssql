@@ -153,6 +153,18 @@ Example: override the built-in session properties supplied by pymssql by default
 }
 ```
 
+Optional:
+
+The `"enable_tds_logging"` When set it will dump out the underlying TDS driver logs. Useful for diagnosing issues if you are having connection issues to SQL Server databases. WARNING! this
+does dump a lot of information and may log secure data, should be only used in Development
+environments.
+
+```json
+{
+  "enable_tds_logging": true
+}
+```
+
 These are the same basic configuration properties used by the mssql command-line
 client (`mssql`).
 
