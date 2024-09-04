@@ -301,6 +301,7 @@ def sync_table(mssql_conn, config, catalog_entry, state, columns, stream_version
             escape_table_name = common.escape(catalog_entry.table)
             escaped_schema_name = common.escape(schema_name)
             escaped_cdc_table = common.escape(cdc_table)
+            escaped_cdc_function = common.escape("fn_cdc_get_all_changes_" + cdc_table)
 
             if not verify_change_data_capture_table(mssql_conn, escaped_schema_name, escape_table_name):
                 raise Exception(
@@ -367,13 +368,13 @@ def sync_table(mssql_conn, config, catalog_entry, state, columns, stream_version
                                     , __$start_lsn _sdc_lsn_value
                                     , __$seqval _sdc_lsn_seq_value
                                     , __$operation _sdc_lsn_operation
-                                FROM cdc."fn_cdc_get_all_changes_{}"(@from_lsn, @to_lsn, 'all')
+                                FROM cdc.{}(@from_lsn, @to_lsn, 'all')
                                 ORDER BY __$start_lsn, __$seqval, __$operation
                                 ;""".format(
                     from_lsn_expression,
                     py_bin_to_mssql(lsn_to),
                     ",".join(escaped_columns),
-                    cdc_table,
+                    escaped_cdc_function,
                 )
 
                 params = {}
