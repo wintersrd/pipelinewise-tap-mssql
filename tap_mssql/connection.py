@@ -3,6 +3,7 @@
 import backoff
 import pymssql
 import singer
+from os import environ
 
 LOGGER = singer.get_logger()
 
@@ -35,6 +36,12 @@ class MSSQLConnection(pymssql.Connection):
             "port": config.get("port", "1433"),
             "tds_version": config.get("tds_version", "7.3"),
         }
+        # Add additional conn_properties for specific version settings
+        if config.get("conn_properties"):
+            args["conn_properties"] = config.get("conn_properties")
+        # Optional ability to dump TDS logs
+        if config.get("enable_tds_logging"):
+            environ['TDSDUMP'] = 'stderr'
         conn = pymssql._mssql.connect(**args)
         super().__init__(conn, False, True)
 

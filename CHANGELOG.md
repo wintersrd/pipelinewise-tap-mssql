@@ -1,3 +1,10 @@
+# tap-mssql 2.6.0 2024-09-02
+* Resolving issue LOG_BASED tables with special characters. Escaping the object
+  names with double quotes. Issue #74
+* Providing more flexibility with database connections to support newer
+  SQL Server instances like PDW via option conn_properties config. Issue #28
+* Provides the ability to dump TDS logs via new enable_tds_logging config.
+
 # tap-mssql 2.5.0 2024-08-26
 
 * removing tox-poetry-install - Not well supported.
