@@ -1,3 +1,6 @@
+# tap-mssql 2.6.1 2024-10-09
+* Resolving issue with call get the prior LSN number (passing in unescaped table).
+
 # tap-mssql 2.6.0 2024-09-02
 * Resolving issue LOG_BASED tables with special characters. Escaping the object
   names with double quotes. Issue #74
