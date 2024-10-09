@@ -1,3 +1,8 @@
+# tap-mssql 2.6.2 2024-10-09
+* Resolving issue when a table has a primary key and unique key. Both unique and primary key
+  columns were being identified as the primary key for the target table. Prioritising the
+  primary key first, and unique key secondary if there is no primary key.
+
 # tap-mssql 2.6.1 2024-10-09
 * Resolving issue with call get the prior LSN number (passing in unescaped table).
 
