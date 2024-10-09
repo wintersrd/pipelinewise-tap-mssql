@@ -311,7 +311,7 @@ def sync_table(mssql_conn, config, catalog_entry, state, columns, stream_version
                     ).format(escaped_schema_name, escape_table_name)
                 )
 
-            lsn_range = get_lsn_available_range(mssql_conn, table_name)
+            lsn_range = get_lsn_available_range(mssql_conn, cdc_table)
 
             if lsn_range[0] is not None:  # Test to see if there are any change records to process
                 lsn_from = str(lsn_range[0].hex())
