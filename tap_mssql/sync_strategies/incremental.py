@@ -57,11 +57,19 @@ def sync_table(mssql_conn, config, catalog_entry, state, columns):
                     replication_key_value = datetime.fromtimestamp(
                         pendulum.parse(replication_key_value).timestamp()
                     )
+                # Handle timestamp incremental (timestamp)
+                if catalog_entry.schema.properties[replication_key_metadata].format == 'rowversion':
+                    select_sql += """ WHERE CAST("{}" AS BIGINT) >= 
+                    convert(bigint, convert (varbinary(8), '0x{}', 1))
+                    ORDER BY "{}" ASC""".format(
+                        replication_key_metadata, replication_key_value, replication_key_metadata
+                    )
                     
+                else:
+                    select_sql += ' WHERE "{}" >= %(replication_key_value)s ORDER BY "{}" ASC'.format(
+                        replication_key_metadata, replication_key_metadata
+                    )
 
-                select_sql += ' WHERE "{}" >= %(replication_key_value)s ORDER BY "{}" ASC'.format(
-                    replication_key_metadata, replication_key_metadata
-                )
 
                 params["replication_key_value"] = replication_key_value
             elif replication_key_metadata is not None:
