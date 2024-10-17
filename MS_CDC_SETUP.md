@@ -594,3 +594,97 @@ EXEC [sys].[sp_cdc_disable_table]
   @capture_instance = @capture_instance_temp
 
 ```
+
+## Code to manage structural changes (DDL) to tables being captured.
+
+The following code is a variant of the code above in a packaged form.
+
+This may assist the process of maintaining CDC tables when the base table has a structural change.
+
+```sql
+--Automated sqlserver-cdc-re-enrolled procedures.
+
+CREATE PROCEDURE [mydatabase].[DisableCDC]
+    @schema_name NVARCHAR(512),
+    @table_name NVARCHAR(512)
+AS
+BEGIN
+    DECLARE @capture_instance NVARCHAR(512) = @schema_name + '_' + @table_name;
+    EXEC sys.sp_cdc_disable_table
+    @source_schema = @schema_name,
+    @source_name = @table_name,
+    @capture_instance = @capture_instance
+END;
+GO
+CREATE PROCEDURE [mydatabase].[EnableCDC]
+    @schema_name NVARCHAR(512),
+    @table_name NVARCHAR(512)
+AS
+BEGIN
+    EXEC sys.sp_cdc_enable_table
+    @source_schema = @schema_name,
+    @source_name = @table_name,
+    @role_name = RoleChangeDataCapture,
+    @supports_net_changes = 1
+END;
+GO
+create procedure [mydatabase].[ReEnrollCDCTable]
+    @source_schema varchar(max),
+    @source_name varchar(max)
+as
+begin
+    declare @cdc_schema varchar(max) = 'cdc'
+    declare @column_list varchar(max)
+    declare @sql varchar(max)
+    declare @capture_instance varchar(max)
+    set @capture_instance = @source_schema + '_' + @source_name
+    declare @ct_table varchar(max)
+    set @ct_table = @capture_instance + '_ct'
+    declare @capture_instance_temp varchar(max)
+    set @capture_instance_temp = @capture_instance + '_temp'
+    declare @ct_table_temp varchar(max)
+    set @ct_table_temp = @capture_instance_temp + '_ct'
+    exec sys.sp_cdc_enable_table
+        @source_schema = @source_schema,
+        @source_name = @source_name,
+        @role_name = N'RoleChangeDataCapture',
+        @supports_net_changes = 1,
+        @capture_instance = @capture_instance_temp
+    select @column_list = stuff((
+        select ',' + column_name
+        from (
+            select ct.column_name
+            from information_schema.columns ct
+            inner join information_schema.columns ctt
+                on ct.column_name = ctt.column_name
+            where ct.table_name = @ct_table and ct.table_schema = @cdc_schema
+            and ctt.table_name = @ct_table_temp and ctt.table_schema = @cdc_schema
+        ) x
+        for xml path('')), 1, 1, '')
+    set @sql = 'insert into ' + @cdc_schema + '.' + @ct_table_temp +
+               '(' + @column_list + ') select ' + @column_list +
+               ' from ' + @cdc_schema + '.' + @ct_table
+    exec(@sql)
+    exec dbo.disablecdc @source_schema,@source_name;
+    exec dbo.enablecdc @source_schema,@source_name;
+    set @sql = 'insert into ' + @cdc_schema + '.' + @ct_table +
+               '(' + @column_list + ') select ' + @column_list +
+               ' from ' + @cdc_schema + '.' + @ct_table_temp
+    exec(@sql)
+    exec sys.sp_cdc_disable_table
+        @source_schema = @source_schema,
+        @source_name = @source_name,
+        @capture_instance = @capture_instance_temp
+end
+go
+
+--Example-cdc-re-enroll-tables
+
+-- Stop the CDC processing
+exec sp_cdc_stop_job
+-- Align CDC tables with new table structure
+exec mydatabase.ReEnrollCDCTable 'schema1','table_a'
+exec mydatabase.ReEnrollCDCTable 'schema2','table_b'
+-- Restart the CDC processing
+exec sp_cdc_start_job
+```

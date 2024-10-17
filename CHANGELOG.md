@@ -1,3 +1,6 @@
+# tap-mssql 2.6.3 2024-10-17
+* Updating CDC documentation with a packaged method to maintain CDC tables.
+
 # tap-mssql 2.6.2 2024-10-09
 * Resolving issue when a table has a primary key and unique key. Both unique and primary key
   columns were being identified as the primary key for the target table. Prioritising the
