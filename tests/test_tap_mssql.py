@@ -650,6 +650,63 @@ class TestViews(unittest.TestCase):
 
         self.assertEqual(primary_keys, {"a_table": ["id"], "a_view": []})
 
+class TestPrimaryKeyUniqueKey(unittest.TestCase):
+    def setUp(self):
+        self.conn = test_utils.get_test_connection()
+
+        with connect_with_backoff(self.conn) as open_conn:
+            with open_conn.cursor() as cursor:
+                try:
+                    cursor.execute("drop table uc_only_table")
+                except:
+                    pass
+                try:
+                    cursor.execute("drop table pk_only_table")
+                except:
+                    pass
+                try:
+                    cursor.execute("drop table pk_uc_table")
+                except:
+                    pass
+                cursor.execute(
+                    """
+                    CREATE TABLE uc_only_table (
+                      pk int,
+                      uc_1 int,
+                      uc_2 int,
+                    CONSTRAINT constraint_uc_only_table UNIQUE(uc_1,uc_2)  )
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE pk_only_table (
+                      pk int PRIMARY KEY,
+                      uc_1 int,
+                      uc_2 int,
+                    )
+                    """
+                )
+                cursor.execute(
+                    """
+                    CREATE TABLE pk_uc_table (
+                      pk int PRIMARY KEY,
+                      uc_1 int,
+                      uc_2 int,
+                    CONSTRAINT constraint_pk_uc_table UNIQUE(uc_1,uc_2)  )
+                    """
+                )
+
+    def test_only_primary_key(self):
+        catalog = test_utils.discover_catalog(self.conn, {})
+        primary_keys = {}
+        for c in catalog.streams:
+            primary_keys[c.table] = (
+                singer.metadata.to_map(c.metadata).get((), {}).get("table-key-properties")
+            )
+
+        self.assertEqual(primary_keys["uc_only_table"], ["uc_1","uc_2"])
+        self.assertEqual(primary_keys["pk_only_table"], ["pk"])
+        self.assertEqual(primary_keys["pk_uc_table"], ["pk"])
 
 if __name__ == "__main__":
     # test1 = TestBinlogReplication()
