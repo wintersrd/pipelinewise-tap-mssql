@@ -230,18 +230,31 @@ def discover_catalog(mssql_conn, config):
             table_info[db][table] = {"row_count": None, "is_view": table_type == "VIEW"}
         LOGGER.info("Tables fetched, fetching columns")
         cur.execute(
-            """with constraint_columns as (
+            """              with table_constraints as (
+                  select tc.TABLE_SCHEMA,
+                         tc.TABLE_NAME,
+                         tc.CONSTRAINT_NAME,
+                         tc.CONSTRAINT_TYPE,
+                         row_number() over (partition by tc.TABLE_SCHEMA, tc.TABLE_NAME
+                                                order by tc.constraint_TYPE) as row_number_rank
+                                
+                  from INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
+                  where tc.CONSTRAINT_TYPE in ('PRIMARY KEY', 'UNIQUE')
+               )
+               ,constraint_columns as (
                 select c.TABLE_SCHEMA
                 , c.TABLE_NAME
                 , c.COLUMN_NAME
+                , c.CONSTRAINT_NAME
 
                 from INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE c
 
-                join INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
+                join table_constraints tc
                         on tc.TABLE_SCHEMA = c.TABLE_SCHEMA
                         and tc.TABLE_NAME = c.TABLE_NAME
                         and tc.CONSTRAINT_NAME = c.CONSTRAINT_NAME
-                        and tc.CONSTRAINT_TYPE in ('PRIMARY KEY', 'UNIQUE'))
+                        and tc.row_number_rank = 1
+                )
                 SELECT c.TABLE_SCHEMA,
                     c.TABLE_NAME,
                     c.COLUMN_NAME,
