@@ -1,3 +1,7 @@
+
+# tap-mssql 2.6.5 2024-10-24
+* Adding support for ntext to list of valid STRING_TYPES.
+
 # tap-mssql 2.6.4 2024-10-24
 * Update to handle `timestamp` (not a datetime value, a [deprecated](https://learn.microsoft.com/en-us/sql/t-sql/data-types/rowversion-transact-sql?view=sql-server-ver16#remarks) synonym of internal `rowversion`) as string
 * Add tests for incremental syncing using a `timestamp` column as `replication-key`
