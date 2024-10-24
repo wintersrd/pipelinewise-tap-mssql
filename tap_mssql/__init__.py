@@ -51,6 +51,7 @@ STRING_TYPES = set(
         "uniqueidentifier",
         "nvarchar",
         "nchar",
+        "ntext",
     ]
 )
 
