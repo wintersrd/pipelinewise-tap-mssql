@@ -66,7 +66,7 @@ FLOAT_TYPES = set(["float", "double", "real"])
 
 DECIMAL_TYPES = set(["decimal", "number", "money", "smallmoney", "numeric"])
 
-DATETIME_TYPES = set(["datetime2", "datetime", "datetimeoffset", "timestamp", "smalldatetime"])
+DATETIME_TYPES = set(["datetime2", "datetime", "datetimeoffset", "smalldatetime"])
 
 DATE_TYPES = set(["date"])
 
@@ -101,6 +101,10 @@ def schema_for_column(c, config):
 
     if data_type == "bit":
         result.type = ["null", "boolean"]
+    
+    elif data_type in ["timestamp", "rowversion"]:
+        result.type = ["null", "string"]
+        result.format = "rowversion"
 
     elif data_type in BYTES_FOR_INTEGER_TYPE:
         result.type = ["null", "integer"]

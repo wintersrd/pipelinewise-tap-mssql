@@ -561,15 +561,15 @@ class TestIncrementalReplication(unittest.TestCase):
 
         (message_types, versions) = message_types_and_versions(SINGER_MESSAGES)
 
-        self.assertEqual(
-            [
-                "ActivateVersionMessage",
-                "RecordMessage",
-            ],
-            sorted(list(set(message_types))),
-        )
+
         self.assertTrue(isinstance(versions[0], int))
         self.assertEqual(versions[0], versions[1])
+        record_messages = [message for message in SINGER_MESSAGES if isinstance(message,singer.RecordMessage)]
+        incremental_record_messages = [m for m in record_messages if m.stream == 'dbo-incremental']
+        integer_incremental_record_messages = [m for m in record_messages if m.stream == 'dbo-integer_incremental']
+        
+        self.assertEqual(len(incremental_record_messages),3)
+        self.assertEqual(len(integer_incremental_record_messages),3)
 
     def test_with_state(self):
         state = {
@@ -602,7 +602,14 @@ class TestIncrementalReplication(unittest.TestCase):
         )
         self.assertTrue(isinstance(versions[0], int))
         self.assertEqual(versions[0], versions[1])
-        self.assertEqual(versions[1], 12345)
+        
+        # Based on state values provided check the number of record messages emitted
+        record_messages = [message for message in SINGER_MESSAGES if isinstance(message,singer.RecordMessage)]
+        incremental_record_messages = [m for m in record_messages if m.stream == 'dbo-incremental']
+        integer_incremental_record_messages = [m for m in record_messages if m.stream == 'dbo-integer_incremental']
+        
+        self.assertEqual(len(incremental_record_messages),2)
+        self.assertEqual(len(integer_incremental_record_messages),1)
 
 
 class TestViews(unittest.TestCase):
@@ -649,6 +656,76 @@ class TestViews(unittest.TestCase):
             )
 
         self.assertEqual(primary_keys, {"a_table": ["id"], "a_view": []})
+
+class TestTimestampIncrementalReplication(unittest.TestCase):
+    def setUp(self):
+        self.conn = test_utils.get_test_connection()
+
+        with connect_with_backoff(self.conn) as open_conn:
+            with open_conn.cursor() as cursor:
+                try:
+                    cursor.execute("drop table incremental")
+                except:
+                    pass
+                cursor.execute("CREATE TABLE incremental (val int, updated timestamp)")
+                cursor.execute("INSERT INTO incremental (val) VALUES (1)") #00000000000007d1
+                cursor.execute("INSERT INTO incremental (val) VALUES (2)") #00000000000007d2
+                cursor.execute("INSERT INTO incremental (val) VALUES (3)") #00000000000007d3
+
+        self.catalog = test_utils.discover_catalog(self.conn, {})
+
+        for stream in self.catalog.streams:
+            stream.metadata = [
+                {
+                    "breadcrumb": (),
+                    "metadata": {
+                        "selected": True,
+                        "table-key-properties": [],
+                        "database-name": "dbo",
+                    },
+                },
+                {"breadcrumb": ("properties", "val"), "metadata": {"selected": True}},
+            ]
+
+            stream.stream = stream.table
+            test_utils.set_replication_method_and_key(stream, "INCREMENTAL", "updated")
+
+    def test_with_no_state(self):
+        state = {}
+
+        global SINGER_MESSAGES
+        SINGER_MESSAGES.clear()
+
+        tap_mssql.do_sync(self.conn, test_utils.get_db_config(), self.catalog, state)
+
+        (message_types, versions) = message_types_and_versions(SINGER_MESSAGES)
+
+        record_messages = [message for message in SINGER_MESSAGES if isinstance(message,singer.RecordMessage)]
+        
+        self.assertEqual(len(record_messages),3)
+
+
+    def test_with_state(self):
+        state = {
+            "bookmarks": {
+                "dbo-incremental": {
+                    "version": 1,
+                    "replication_key_value": '00000000000007d2',
+                    "replication_key": "updated",
+                },
+            }
+        }
+
+        global SINGER_MESSAGES
+        SINGER_MESSAGES.clear()
+        tap_mssql.do_sync(self.conn, test_utils.get_db_config(), self.catalog, state)
+
+        (message_types, versions) = message_types_and_versions(SINGER_MESSAGES)
+
+        # Given the state value supplied, there should only be two RECORD messages
+        record_messages = [message for message in SINGER_MESSAGES if isinstance(message,singer.RecordMessage)]
+        
+        self.assertEqual(len(record_messages),2)
 
 class TestPrimaryKeyUniqueKey(unittest.TestCase):
     def setUp(self):
@@ -707,6 +784,7 @@ class TestPrimaryKeyUniqueKey(unittest.TestCase):
         self.assertEqual(primary_keys["uc_only_table"], ["uc_1","uc_2"])
         self.assertEqual(primary_keys["pk_only_table"], ["pk"])
         self.assertEqual(primary_keys["pk_uc_table"], ["pk"])
+
 
 if __name__ == "__main__":
     # test1 = TestBinlogReplication()
