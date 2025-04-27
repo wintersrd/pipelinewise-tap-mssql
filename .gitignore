@@ -132,3 +132,4 @@ dmypy.json
 config.json
 state.json
 properties.json
+.secrets/
