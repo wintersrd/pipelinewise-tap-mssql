@@ -31,6 +31,7 @@ Column = collections.namedtuple(
         "numeric_precision",
         "numeric_scale",
         "is_primary_key",
+        "is_cdc_enabled",
     ],
 )
 
@@ -86,7 +87,7 @@ def default_singer_decimal():
     """
     return False
 
-def schema_for_column(c, config):
+def schema_for_column(c, config, is_filter_cdc=False):
     """Returns the Schema object for the given Column."""
     data_type = c.data_type.lower()
 
@@ -97,6 +98,9 @@ def schema_for_column(c, config):
 
     if c.is_primary_key == 1:
         inclusion = "automatic"
+        
+    if is_filter_cdc and c.is_cdc_enabled == 0:
+        inclusion = "unsupported"
 
     result = Schema(inclusion=inclusion)
 
@@ -194,7 +198,7 @@ def create_column_metadata(cols, config):
     return metadata.to_list(mdata)
 
 
-def discover_catalog(mssql_conn, config):
+def discover_catalog(mssql_conn, config, is_cdc=False):
     """Returns a Catalog describing the structure of the database."""
     LOGGER.info("Preparing Catalog")
     mssql_conn = MSSQLConnection(config)
@@ -214,13 +218,21 @@ def discover_catalog(mssql_conn, config):
         )"""
 
     with connect_with_backoff(mssql_conn) as open_conn:
+        is_db_cdc_enabled = log_based.verify_change_data_capture_databases(open_conn)
+        
         cur = open_conn.cursor()
         LOGGER.info("Fetching tables")
         cur.execute(
             """SELECT TABLE_SCHEMA,
                 TABLE_NAME,
-                TABLE_TYPE
+                TABLE_TYPE,
+                is_tracked_by_cdc as IS_CDC_ENABLED
             FROM INFORMATION_SCHEMA.TABLES c
+            INNER JOIN sys.schemas s
+                ON c.TABLE_SCHEMA = s.name
+            LEFT JOIN sys.tables t
+                ON c.TABLE_NAME = t.name
+                AND s.schema_id = t.schema_id
             {}
         """.format(
                 table_schema_clause
@@ -228,14 +240,52 @@ def discover_catalog(mssql_conn, config):
         )
         table_info = {}
 
-        for (db, table, table_type) in cur.fetchall():
+        for (db, table, table_type, is_cdc_enabled) in cur.fetchall():
             if db not in table_info:
                 table_info[db] = {}
 
-            table_info[db][table] = {"row_count": None, "is_view": table_type == "VIEW"}
+            table_info[db][table] = {"row_count": None, "is_view": table_type == "VIEW", "is_cdc_enabled": is_cdc_enabled}
         LOGGER.info("Tables fetched, fetching columns")
-        cur.execute(
-            """              with table_constraints as (
+        
+        if is_db_cdc_enabled:
+            cdc_cte_clause = """
+                cdc_tables as (
+                    SELECT s.name as TABLE_SCHEMA, 
+                        t.name AS TABLE_NAME, 
+                        ct.capture_instance AS CAPTURE_INSTANCE,
+                        ct.supports_net_changes AS SUPPORTS_NET_CHANGES,
+                        ct.object_id AS CDC_OBJECT_ID,
+                        ROW_NUMBER() OVER (PARTITION BY ct.source_object_id ORDER BY ct.start_lsn, ct.create_date desc) AS ROW_NUMBER_RANK
+                    FROM sys.tables t
+                    INNER JOIN sys.schemas s
+                        ON t.schema_id = s.schema_id
+                    INNER JOIN cdc.change_tables ct
+                        ON ct.source_object_id = t.object_id
+                ),
+                cdc_columns AS (
+                    SELECT ct.TABLE_SCHEMA,
+                        ct.TABLE_NAME,
+                        ccols.column_name AS COLUMN_NAME
+                    FROM cdc_tables AS ct
+                    INNER JOIN cdc.captured_columns ccols
+                        ON ct.CDC_OBJECT_ID = ccols.object_id
+                        AND ct.ROW_NUMBER_RANK = 1
+                ),
+            """
+        else:
+            cdc_cte_clause = """
+                cdc_columns AS (
+                    SELECT 
+                        CAST(NULL AS NVARCHAR) AS TABLE_SCHEMA,
+                        CAST(NULL AS NVARCHAR) AS TABLE_NAME,
+                        CAST(NULL AS NVARCHAR) AS COLUMN_NAME
+                    WHERE 1 = 0
+                ),
+            """
+        
+        cur.execute("""
+               with {}
+               table_constraints as (
                   select tc.TABLE_SCHEMA,
                          tc.TABLE_NAME,
                          tc.CONSTRAINT_NAME,
@@ -267,7 +317,8 @@ def discover_catalog(mssql_conn, config):
                     CHARACTER_MAXIMUM_LENGTH,
                     NUMERIC_PRECISION,
                     NUMERIC_SCALE,
-                    case when cc.COLUMN_NAME is null then 0 else 1 end
+                    case when cc.COLUMN_NAME is null then 0 else 1 end as is_primary_key,
+                    case when ccols.COLUMN_NAME is null then 0 else 1 end as is_cdc_enabled
                 FROM INFORMATION_SCHEMA.COLUMNS c
 
                 left join constraint_columns cc
@@ -275,9 +326,15 @@ def discover_catalog(mssql_conn, config):
                     and cc.TABLE_SCHEMA = c.TABLE_SCHEMA
                     and cc.COLUMN_NAME = c.COLUMN_NAME
 
+                left join cdc_columns ccols
+                    on ccols.TABLE_NAME = c.TABLE_NAME
+                    and ccols.TABLE_SCHEMA = c.TABLE_SCHEMA
+                    and ccols.COLUMN_NAME = c.COLUMN_NAME
+
                 {}
                 ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.ORDINAL_POSITION
         """.format(
+                cdc_cte_clause,
                 table_schema_clause
             )
         )
@@ -292,9 +349,10 @@ def discover_catalog(mssql_conn, config):
         for (k, cols) in itertools.groupby(columns, lambda c: (c.table_schema, c.table_name)):
             cols = list(cols)
             (table_schema, table_name) = k
+            table_cdc_enabled = table_info[table_schema][table_name]["is_cdc_enabled"]
             schema = Schema(
                 type="object",
-                properties={c.column_name: schema_for_column(c, config) for c in cols},
+                properties={c.column_name: schema_for_column(c, config, is_filter_cdc=table_cdc_enabled and is_cdc) for c in cols},
             )
             md = create_column_metadata(cols, config)
             md_map = metadata.to_map(md)
@@ -556,7 +614,7 @@ def get_non_cdc_streams(mssql_conn, catalog, config, state):
 
 
 def get_cdc_streams(mssql_conn, catalog, config, state):
-    discovered = discover_catalog(mssql_conn, config)
+    discovered = discover_catalog(mssql_conn, config, is_cdc=True)
 
     selected_streams = list(filter(lambda s: common.stream_is_selected(s), catalog.streams))
     cdc_streams = []

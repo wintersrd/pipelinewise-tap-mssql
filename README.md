@@ -396,6 +396,39 @@ not work with Change Tracking!
 
 To find out more about setting up CDC, refer to this page [MSSQL CDC Setup](MS_CDC_SETUP.md)
 
+As part of CDC setup, per table you can specify whether the capture instance supports the query of net changes. If you have configured the capture instance of a table to support net changes and would prefer to only sync the net changes between syncs as opposed to a row for every change made to the table since last sync then this can be specified in the stream metadata.
+
+The `cdc_sync_mode` property can be set to either `all` or `net` with the default being `all` when not supplied for `LOG_BASED` sync.
+
+```json
+{
+  "streams": [
+    {
+      "tap_stream_id": "example_db-animals",
+      "table_name": "animals",
+      "schema": { ... },
+      "metadata": [
+        {
+          "breadcrumb": [],
+          "metadata": {
+            "row-count": 3,
+            "table-key-properties": [
+              "id"
+            ],
+            "database-name": "example_db",
+            "selected-by-default": false,
+            "replication-method": "LOG_BASED",
+            "cdc_sync_mode": "net"
+          }
+        },
+        ...
+      ],
+      "stream": "animals"
+    }
+  ]
+}
+```
+
 ### Incremental
 
 Incremental replication works in conjunction with a state file to only extract
