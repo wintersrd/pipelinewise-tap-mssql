@@ -52,6 +52,7 @@ STRING_TYPES = set(
         "nvarchar",
         "nchar",
         "ntext",
+        "xml",
     ]
 )
 

@@ -117,6 +117,9 @@ def add_synthetic_keys_to_schema(catalog_entry):
         type=["null", "string"],
         format="string",
     )
+    catalog_entry.schema.properties["_sdc_deleted_at"] = Schema(
+        description="Source system delete timestamp", type=["null", "string"], format="date-time"
+    )
     catalog_entry.schema.properties["_sdc_lsn_commit_timestamp"] = Schema(
         description="Source system commit timestamp", type=["null", "string"], format="date-time"
     )
@@ -172,6 +175,7 @@ def sync_historic_table(mssql_conn, config, catalog_entry, state, columns, strea
     # Add additional keys to the columns
     extended_columns = columns + [
         "_sdc_operation_type",
+        "_sdc_deleted_at",
         "_sdc_lsn_commit_timestamp",
         "_sdc_lsn_deleted_at",
         "_sdc_lsn_value",
@@ -264,6 +268,7 @@ def sync_table(mssql_conn, config, catalog_entry, state, columns, stream_version
     # Add additional keys to the columns
     extended_columns = columns + [
         "_sdc_operation_type",
+        "_sdc_deleted_at",
         "_sdc_lsn_commit_timestamp",
         "_sdc_lsn_deleted_at",
         "_sdc_lsn_value",
@@ -359,7 +364,11 @@ def sync_table(mssql_conn, config, catalog_entry, state, columns, stream_version
                                         when 2 then 'I'
                                         when 4 then 'U'
                                         when 1 then 'D'
-                                    end _sdc_operation_type
+                                        end _sdc_operation_type
+                                    , case __$operation
+                                        when 1 then sys.fn_cdc_map_lsn_to_time(__$start_lsn)
+                                        else null
+                                        end _sdc_deleted_at
                                     , sys.fn_cdc_map_lsn_to_time(__$start_lsn) _sdc_lsn_commit_timestamp
                                     , case __$operation
                                         when 1 then sys.fn_cdc_map_lsn_to_time(__$start_lsn)
