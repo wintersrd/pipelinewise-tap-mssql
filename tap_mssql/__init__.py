@@ -127,7 +127,7 @@ def schema_for_column(c, config):
 
     elif data_type in DECIMAL_TYPES:
         if use_singer_decimal:
-            result.type = ["null","number","string"]
+            result.type = ["null","string"]
             result.format = "singer.decimal"
             result.additionalProperties = {"scale_precision": f"({c.character_maximum_length or c.numeric_precision},{c.numeric_scale})"}
         else:
